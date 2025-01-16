@@ -109,7 +109,7 @@ function HomePage() {
   };
 
   const getShortUrl = (slug: string) => {
-    return `${window.location.origin}/${slug}`;
+    return `${window.location.origin}/l/${slug}`;
   };
 
   const handleEditClick = (link: any) => {
