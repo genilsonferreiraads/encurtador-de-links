@@ -4,12 +4,12 @@
   functions = "netlify/functions"
 
 [[redirects]]
-  from = "/admin"
+  from = "/admin/*"
   to = "/index.html"
   status = 200
 
 [[redirects]]
-  from = "/*"
+  from = "/l/*"
   to = "/.netlify/functions/redirect"
   status = 200
   force = true
