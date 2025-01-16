@@ -10,8 +10,9 @@
 
 [[redirects]]
   from = "/*"
-  to = "/.netlify/functions/redirect/:splat"
+  to = "/.netlify/functions/redirect"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
