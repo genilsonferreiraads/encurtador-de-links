@@ -9,8 +9,11 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export const handler: Handler = async (event) => {
   try {
+    console.log('Event path:', event.path);
     const path = event.path.replace('/.netlify/functions/redirect', '');
+    console.log('Path after replace:', path);
     const slug = path.split('/').filter(Boolean)[0];
+    console.log('Extracted slug:', slug);
 
     if (!slug) {
       return {
@@ -21,11 +24,21 @@ export const handler: Handler = async (event) => {
 
     const { data: link, error } = await supabase
       .from('links')
-      .select('destination_url')
+      .select('*')
       .eq('slug', slug)
       .single();
 
-    if (error || !link) {
+    console.log('Supabase response:', { data: link, error });
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ message: 'Link não encontrado', error }),
+      };
+    }
+
+    if (!link) {
       return {
         statusCode: 404,
         body: JSON.stringify({ message: 'Link não encontrado' }),
@@ -35,6 +48,8 @@ export const handler: Handler = async (event) => {
     const destinationUrl = link.destination_url.startsWith('http://') || link.destination_url.startsWith('https://')
       ? link.destination_url
       : `https://${link.destination_url}`;
+
+    console.log('Redirecting to:', destinationUrl);
 
     return {
       statusCode: 301,
@@ -46,10 +61,10 @@ export const handler: Handler = async (event) => {
       body: ''
     };
   } catch (error) {
-    console.error('Erro:', error);
+    console.error('Error details:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Erro interno do servidor' }),
+      body: JSON.stringify({ message: 'Erro interno do servidor', error: error.message }),
     };
   }
 }; 
