@@ -10,7 +10,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const handler: Handler = async (event) => {
   try {
     console.log('Event path:', event.path);
-    const path = event.path.replace('/.netlify/functions/redirect', '');
+    const path = event.path.replace('/.netlify/functions/redirect', '').replace('/l/', '/');
     console.log('Path after replace:', path);
     const slug = path.split('/').filter(Boolean)[0];
     console.log('Extracted slug:', slug);
