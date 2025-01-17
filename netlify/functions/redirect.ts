@@ -1,12 +1,9 @@
 import { Handler } from '@netlify/functions';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Use as variáveis de ambiente do Netlify
+const supabaseUrl = 'https://cvjwpgphpvefxnrsdiwo.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2andwZ3BocHZlZnhucnNkaXdvIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNzA1Mjk0OCwiZXhwIjoyMDUyNjI4OTQ4fQ.9tEUI3sJnfHbzwLJB-fwAkojJwDQNbqAkdMM3WIGWrI';
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
