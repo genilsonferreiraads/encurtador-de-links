@@ -14553,92 +14553,56 @@ __export(redirect_exports, {
 });
 module.exports = __toCommonJS(redirect_exports);
 var import_supabase_js = __toESM(require_main5(), 1);
-var supabaseUrl = process.env.VITE_SUPABASE_URL || "";
-var supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || "";
-console.log("Verificando vari\xE1veis de ambiente:");
-console.log("URL:", supabaseUrl ? "Definida" : "N\xE3o definida");
-console.log("KEY:", supabaseAnonKey ? "Definida" : "N\xE3o definida");
+var supabaseUrl = process.env.SUPABASE_URL;
+var supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("\u274C ERRO: Vari\xE1veis de ambiente do Supabase n\xE3o encontradas");
-  throw new Error("Missing Supabase environment variables");
+  throw new Error("As vari\xE1veis de ambiente SUPABASE_URL e SUPABASE_ANON_KEY s\xE3o obrigat\xF3rias");
 }
 var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseAnonKey);
-var delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 var handler = async (event) => {
   try {
-    console.log("\n\u{1F50D} DEBUG REDIRECIONAMENTO:");
-    console.log("\u{1F4CD} URL completa:", event.path);
-    if (event.path === "/.netlify/functions/redirect" || event.path === "/.netlify/functions/redirect/") {
-      return {
-        statusCode: 301,
-        headers: {
-          "Location": "/admin",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Content-Type": "text/plain"
-        },
-        body: "Redirecting to admin panel"
-      };
-    }
-    const path = event.path.replace("/.netlify/functions/redirect/", "");
-    console.log("\u{1F6E3}\uFE0F Caminho extra\xEDdo:", path);
-    const slug = path.split("/")[0];
-    console.log("\u{1F511} Slug encontrado:", slug);
+    console.log("Event path:", event.path);
+    const path = event.path.replace("/.netlify/functions/redirect", "").replace("/l/", "/");
+    console.log("Path after replace:", path);
+    const slug = path.split("/").filter(Boolean)[0];
+    console.log("Extracted slug:", slug);
     if (!slug) {
-      console.log("\u26A0\uFE0F Nenhum slug fornecido, redirecionando para /admin");
-      return {
-        statusCode: 301,
-        headers: {
-          "Location": "/admin",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Content-Type": "text/plain"
-        },
-        body: "Redirecting to admin panel"
-      };
-    }
-    console.log("\u{1F50E} Buscando no Supabase o slug:", slug);
-    const { data: link, error } = await supabase.from("links").select("destination_url").eq("slug", slug).single();
-    if (error) {
-      console.error("\u274C Erro do Supabase:", error);
       return {
         statusCode: 404,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate"
-        },
-        body: JSON.stringify({ message: "Link n\xE3o encontrado", error: error.message })
+        body: JSON.stringify({ message: "Slug n\xE3o fornecido" })
+      };
+    }
+    const { data: link, error } = await supabase.from("links").select("*").eq("slug", slug).single();
+    console.log("Supabase response:", { data: link, error });
+    if (error) {
+      console.error("Supabase error:", error);
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ message: "Link n\xE3o encontrado", error })
       };
     }
     if (!link) {
-      console.log("\u274C Nenhum link encontrado para o slug:", slug);
       return {
         statusCode: 404,
-        headers: {
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate"
-        },
         body: JSON.stringify({ message: "Link n\xE3o encontrado" })
       };
     }
-    console.log("\u2705 URL de destino encontrada:", link.destination_url);
-    await delay(1e3);
+    const destinationUrl = link.destination_url.startsWith("http://") || link.destination_url.startsWith("https://") ? link.destination_url : `https://${link.destination_url}`;
+    console.log("Redirecting to:", destinationUrl);
     return {
       statusCode: 301,
       headers: {
-        "Location": link.destination_url,
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Content-Type": "text/plain"
+        "Location": destinationUrl,
+        "Cache-Control": "no-cache",
+        "Access-Control-Allow-Origin": "*"
       },
-      body: `Redirecting to ${link.destination_url}`
+      body: ""
     };
   } catch (error) {
-    console.error("\u274C Erro do servidor:", error);
+    console.error("Error details:", error);
     return {
       statusCode: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache, no-store, must-revalidate"
-      },
-      body: JSON.stringify({ message: "Erro interno do servidor", error: String(error) })
+      body: JSON.stringify({ message: "Erro interno do servidor", error: error.message })
     };
   }
 };
