@@ -1,37 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Outlet, Link as RouterLink } from 'react-router-dom';
-import {
-  AppBar,
-  Box,
-  Drawer,
-  IconButton,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Toolbar,
-  Typography,
-  Avatar,
-  Menu,
-  MenuItem,
-  Button,
-} from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Home as HomeIcon,
-  Add as AddIcon,
-  List as ListIcon,
-  ExitToApp as LogoutIcon,
-  Link as LinkIcon,
-} from '@mui/icons-material';
+import { useState, useEffect } from 'react';
+import { Outlet, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Avatar, Menu, MenuItem, Divider } from '@mui/material';
+import { Menu as MenuIcon, Link as LinkIcon, ExitToApp as LogoutIcon, Dashboard as DashboardIcon, Add as AddIcon, List as ListIcon } from '@mui/icons-material';
+import { useSidebar } from '../contexts/SidebarContext';
 import { getCurrentUser, signOut, UserProfile } from '../services/supabase';
 
 const drawerWidth = 240;
 
 export default function Layout() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const { isOpen, toggleSidebar } = useSidebar();
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -52,10 +31,6 @@ export default function Layout() {
     loadUser();
   }, [navigate]);
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -74,75 +49,106 @@ export default function Layout() {
   };
 
   const menuItems = [
-    { text: 'Encurtador', icon: <LinkIcon />, path: '/' },
+    { 
+      text: 'Dashboard', 
+      icon: <DashboardIcon />, 
+      path: '/' 
+    },
+    { 
+      text: 'Criar Link', 
+      icon: <AddIcon />, 
+      path: '/criar-link' 
+    },
+    { 
+      text: 'Links Criados', 
+      icon: <ListIcon />, 
+      path: '/links' 
+    },
   ];
-
-  const drawer = (
-    <Box>
-      <Toolbar />
-      <List>
-        {menuItems.map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            component={RouterLink}
-            to={item.path}
-            selected={location.pathname === item.path}
-            sx={{
-              '&.Mui-selected': {
-                backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                '&:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.12)',
-                },
-              },
-              '&:hover': {
-                backgroundColor: 'rgba(25, 118, 210, 0.04)',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ color: location.pathname === item.path ? '#1976d2' : 'inherit' }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText 
-              primary={item.text} 
-              sx={{ 
-                '& .MuiListItemText-primary': { 
-                  color: location.pathname === item.path ? '#1976d2' : 'inherit',
-                  fontWeight: location.pathname === item.path ? 500 : 400,
-                }
-              }}
-            />
-          </ListItem>
-        ))}
-      </List>
-    </Box>
-  );
 
   return (
     <Box sx={{ display: 'flex' }}>
-      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar>
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          bgcolor: '#1976d2',
+          boxShadow: 'none',
+          borderBottom: '1px solid rgba(255,255,255,0.12)'
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'space-between' }}>
           <IconButton
             color="inherit"
             aria-label="open drawer"
             edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            onClick={toggleSidebar}
+            sx={{ 
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'scale(1.1)',
+                bgcolor: 'rgba(255, 255, 255, 0.08)'
+              },
+              '&:active': {
+                transform: 'scale(0.95)'
+              }
+            }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Encurtador de Links
-          </Typography>
+
+          <Box 
+            sx={{ 
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                transform: 'translateX(-50%) scale(1.05)',
+                '& .title-icon': {
+                  transform: 'rotate(10deg)'
+                }
+              }
+            }}
+          >
+            <LinkIcon 
+              className="title-icon"
+              sx={{ 
+                fontSize: 28,
+                transition: 'transform 0.3s ease-in-out',
+              }} 
+            />
+            <Typography 
+              variant="h6" 
+              noWrap 
+              component="div" 
+              sx={{ 
+                color: '#fff', 
+                fontWeight: 600,
+              }}
+            >
+              Encurtador de Links
+            </Typography>
+          </Box>
+
           {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
+              <Typography variant="body1" sx={{ color: '#fff', mr: 2 }}>
                 Olá, {user.full_name || user.email}
               </Typography>
               <IconButton
                 onClick={handleMenuOpen}
                 size="small"
-                sx={{ ml: 2 }}
+                sx={{ 
+                  transition: 'transform 0.2s',
+                  '&:hover': {
+                    transform: 'scale(1.1)'
+                  }
+                }}
               >
                 <Avatar
                   alt={user.full_name || user.email}
@@ -154,10 +160,26 @@ export default function Layout() {
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
+                PaperProps={{
+                  sx: {
+                    mt: 1,
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: 2
+                  }
+                }}
               >
-                <MenuItem onClick={handleLogout}>
+                <MenuItem 
+                  onClick={handleLogout}
+                  sx={{
+                    color: '#dc2626',
+                    '&:hover': {
+                      bgcolor: 'rgba(220, 38, 38, 0.08)'
+                    }
+                  }}
+                >
                   <ListItemIcon>
-                    <LogoutIcon fontSize="small" />
+                    <LogoutIcon fontSize="small" sx={{ color: '#dc2626' }} />
                   </ListItemIcon>
                   <ListItemText primary="Sair" />
                 </MenuItem>
@@ -166,44 +188,82 @@ export default function Layout() {
           )}
         </Toolbar>
       </AppBar>
-      <Box
-        component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            borderRight: '1px solid rgba(0,0,0,0.08)',
+            bgcolor: '#f8fafc',
+            transition: 'transform 0.3s ease-in-out',
+            transform: isOpen ? 'translateX(0)' : `translateX(-${drawerWidth}px)`,
+            overflowX: 'hidden',
+            '&::-webkit-scrollbar': {
+              display: 'none'
+            },
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          },
+        }}
       >
-        <Drawer
-          variant="temporary"
-          open={mobileOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
-        >
-          {drawer}
-        </Drawer>
-      </Box>
-      <Box 
-        component="main" 
+        <Toolbar />
+        <Box sx={{ mt: 2 }}>
+          <List>
+            {menuItems.map((item) => (
+              <ListItem
+                button
+                key={item.text}
+                component={RouterLink}
+                to={item.path}
+                selected={location.pathname === item.path}
+                sx={{
+                  mx: 1,
+                  borderRadius: 1,
+                  '&.Mui-selected': {
+                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                    '&:hover': {
+                      bgcolor: 'rgba(25, 118, 210, 0.12)',
+                    },
+                  },
+                  '&:hover': {
+                    bgcolor: 'rgba(25, 118, 210, 0.04)',
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ 
+                  color: location.pathname === item.path ? '#1976d2' : '#64748b',
+                  minWidth: 40
+                }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText 
+                  primary={item.text} 
+                  sx={{ 
+                    '& .MuiListItemText-primary': { 
+                      color: location.pathname === item.path ? '#1976d2' : '#1e293b',
+                      fontWeight: location.pathname === item.path ? 600 : 500,
+                      fontSize: '0.875rem'
+                    }
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
+      <Box
+        component="main"
         sx={{ 
           flexGrow: 1, 
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          mt: '64px' // Altura da AppBar
+          transition: 'margin 0.3s ease-in-out',
+          marginLeft: isOpen ? 0 : `-${drawerWidth}px`,
         }}
       >
+        <Toolbar />
         <Outlet />
       </Box>
     </Box>

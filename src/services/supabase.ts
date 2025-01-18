@@ -162,16 +162,17 @@ export const createUser = async (email: string, password: string, fullName: stri
 
 export interface Link {
   id: number;
+  title: string;
   slug: string;
   destination_url: string;
   created_at: string;
   updated_at: string;
 }
 
-export const createLink = async (slug: string, destinationUrl: string) => {
+export const createLink = async (title: string, slug: string, destinationUrl: string) => {
   const { data, error } = await supabase
     .from('links')
-    .insert([{ slug, destination_url: destinationUrl }])
+    .insert([{ title, slug, destination_url: destinationUrl }])
     .select()
     .single();
 
@@ -200,11 +201,16 @@ export const getLinkBySlug = async (slug: string) => {
   return data;
 };
 
-export const updateLink = async (slug: string, destinationUrl: string) => {
+export const updateLink = async (id: number, title: string, slug: string, destinationUrl: string) => {
   const { data, error } = await supabase
     .from('links')
-    .update({ destination_url: destinationUrl, updated_at: new Date().toISOString() })
-    .eq('slug', slug)
+    .update({ 
+      title,
+      slug,
+      destination_url: destinationUrl,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', id)
     .select()
     .single();
 
