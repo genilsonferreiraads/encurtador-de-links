@@ -74,7 +74,7 @@ export const handler: Handler = async (event) => {
       const clickResult = await supabase
         .from('clicks')
         .insert({
-          link_id: link.id,
+          link_id: Number(link.id),
           device_type: deviceType,
           created_at: new Date().toISOString()
         })

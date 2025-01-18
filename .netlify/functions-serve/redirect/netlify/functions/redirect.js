@@ -14601,7 +14601,7 @@ var handler = async (event) => {
     });
     try {
       const clickResult = await supabase.from("clicks").insert({
-        link_id: link.id,
+        link_id: Number(link.id),
         device_type: deviceType,
         created_at: (/* @__PURE__ */ new Date()).toISOString()
       }).select().single();
