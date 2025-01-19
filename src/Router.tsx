@@ -6,6 +6,7 @@ import DashboardPage from './pages/DashboardPage';
 import CreateLinkPage from './pages/CreateLinkPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import ProfilePage from './pages/ProfilePage';
 import Layout from './components/Layout';
 
 const theme = createTheme({
@@ -30,6 +31,7 @@ export function Router() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/criar-link" element={<CreateLinkPage />} />
           <Route path="/links" element={<HomePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route path="/:slug" element={<RedirectPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

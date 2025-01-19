@@ -36,6 +36,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { supabase } from '../services/supabase';
+import { getCurrentUser } from '../services/supabase';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -60,12 +61,12 @@ function HomePage() {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
           navigate('/login');
           return;
         }
-        setUser(session.user);
+        setUser(currentUser);
         await loadLinks();
       } catch (error) {
         console.error('Erro ao verificar usuário:', error);

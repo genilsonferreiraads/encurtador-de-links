@@ -14559,55 +14559,33 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("As vari\xE1veis de ambiente SUPABASE_URL e SUPABASE_ANON_KEY s\xE3o obrigat\xF3rias");
 }
 var supabase = (0, import_supabase_js.createClient)(supabaseUrl, supabaseAnonKey);
-var detectDeviceType = (userAgent) => {
-  const ua = userAgent.toLowerCase();
-  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-    return "tablet";
-  }
-  if (/Mobile|Android|iP(hone|od)|IEMobile|BlackBerry|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
-    return "mobile";
-  }
-  return "desktop";
-};
 var handler = async (event) => {
   try {
-    console.log("Event received:", {
-      path: event.path,
-      headers: event.headers,
-      method: event.httpMethod
-    });
-    const slug = event.path.split("/").filter(Boolean)[0];
+    console.log("Event path:", event.path);
+    const path = event.path.replace("/.netlify/functions/redirect", "").replace("/l/", "/");
+    console.log("Path after replace:", path);
+    const slug = path.split("/").filter(Boolean)[0];
     console.log("Extracted slug:", slug);
     if (!slug) {
-      console.log("No slug provided");
       return {
         statusCode: 404,
         body: JSON.stringify({ message: "Slug n\xE3o fornecido" })
       };
     }
     const { data: link, error } = await supabase.from("links").select("*").eq("slug", slug).single();
-    console.log("Supabase link query result:", { link, error });
-    if (error || !link) {
-      console.error("Link not found:", error);
+    console.log("Supabase response:", { data: link, error });
+    if (error) {
+      console.error("Supabase error:", error);
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ message: "Link n\xE3o encontrado", error })
+      };
+    }
+    if (!link) {
       return {
         statusCode: 404,
         body: JSON.stringify({ message: "Link n\xE3o encontrado" })
       };
-    }
-    const deviceType = detectDeviceType(event.headers["user-agent"] || "");
-    console.log("Device detection:", {
-      userAgent: event.headers["user-agent"],
-      detectedType: deviceType
-    });
-    try {
-      const clickResult = await supabase.from("clicks").insert({
-        link_id: Number(link.id),
-        device_type: deviceType,
-        created_at: (/* @__PURE__ */ new Date()).toISOString()
-      }).select().single();
-      console.log("Click registration result:", clickResult);
-    } catch (clickError) {
-      console.error("Error registering click:", clickError);
     }
     const destinationUrl = link.destination_url.startsWith("http://") || link.destination_url.startsWith("https://") ? link.destination_url : `https://${link.destination_url}`;
     console.log("Redirecting to:", destinationUrl);
@@ -14621,7 +14599,7 @@ var handler = async (event) => {
       body: ""
     };
   } catch (error) {
-    console.error("Function error:", error);
+    console.error("Error details:", error);
     return {
       statusCode: 500,
       body: JSON.stringify({ message: "Erro interno do servidor", error: error.message })

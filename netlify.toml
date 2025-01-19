@@ -4,11 +4,31 @@
   functions = "netlify/functions"
 
 [[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/assets/*"
+  to = "/assets/:splat"
+  status = 200
+
+[[redirects]]
   from = "/*"
   to = "/.netlify/functions/redirect"
   status = 200
   force = true
-  conditions = {Path = "/:slug"}
+  conditions = { Path = { glob = ["!index.html", "!admin", "!admin/*", "!assets/*", "!/"] } }
 
 [[redirects]]
   from = "/*"

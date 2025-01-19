@@ -1,35 +1,42 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
-import { Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Avatar, Menu, MenuItem, Divider } from '@mui/material';
-import { Menu as MenuIcon, Link as LinkIcon, ExitToApp as LogoutIcon, Dashboard as DashboardIcon, Add as AddIcon, List as ListIcon } from '@mui/icons-material';
+import { Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Avatar, Menu, MenuItem } from '@mui/material';
+import { Menu as MenuIcon, Link as LinkIcon, ExitToApp as LogoutIcon, Dashboard as DashboardIcon, Add as AddIcon, List as ListIcon, Person as PersonIcon } from '@mui/icons-material';
 import { useSidebar } from '../contexts/SidebarContext';
-import { getCurrentUser, signOut, UserProfile } from '../services/supabase';
+import { Usuario, getCurrentUser, clearCurrentUser } from '../services/supabase';
 
 const drawerWidth = 240;
 
 export default function Layout() {
   const { isOpen, toggleSidebar } = useSidebar();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<Usuario | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const userData = await getCurrentUser();
-        if (!userData) {
-          navigate('/login');
-        } else {
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error('Error loading user:', error);
+  const loadUser = async () => {
+    try {
+      const userData = await getCurrentUser();
+      if (!userData) {
         navigate('/login');
+        return;
       }
-    };
+      setUser(userData);
+    } catch (error) {
+      console.error('Error loading user:', error);
+      navigate('/login');
+    }
+  };
+
+  useEffect(() => {
     loadUser();
   }, [navigate]);
+
+  useEffect(() => {
+    if (location.pathname === '/') {
+      loadUser();
+    }
+  }, [location.pathname]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -39,9 +46,15 @@ export default function Layout() {
     setAnchorEl(null);
   };
 
+  const handleProfile = () => {
+    handleMenuClose();
+    navigate('/profile');
+  };
+
   const handleLogout = async () => {
     try {
-      await signOut();
+      clearCurrentUser();
+      setUser(null);
       navigate('/login');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -49,25 +62,17 @@ export default function Layout() {
   };
 
   const menuItems = [
-    { 
-      text: 'Dashboard', 
-      icon: <DashboardIcon />, 
-      path: '/' 
-    },
-    { 
-      text: 'Criar Link', 
-      icon: <AddIcon />, 
-      path: '/criar-link' 
-    },
-    { 
-      text: 'Links Criados', 
-      icon: <ListIcon />, 
-      path: '/links' 
-    },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Criar Link', icon: <AddIcon />, path: '/criar-link' },
+    { text: 'Links Criados', icon: <ListIcon />, path: '/links' },
   ];
 
+  if (!user) {
+    return null;
+  }
+
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
       <AppBar 
         position="fixed" 
         sx={{ 
@@ -135,59 +140,82 @@ export default function Layout() {
             </Typography>
           </Box>
 
-          {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
-              <Typography variant="body1" sx={{ color: '#fff', mr: 2 }}>
-                Olá, {user.full_name || user.email}
-              </Typography>
-              <IconButton
-                onClick={handleMenuOpen}
-                size="small"
+          <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
+            <Typography variant="body1" sx={{ color: '#fff', mr: 2 }}>
+              Olá, {user?.username}
+            </Typography>
+            <IconButton
+              onClick={handleMenuOpen}
+              size="small"
+              sx={{ 
+                transition: 'transform 0.2s',
+                '&:hover': {
+                  transform: 'scale(1.1)'
+                }
+              }}
+            >
+              <Avatar
+                src={user?.avatar_url || undefined}
+                alt={user?.username}
                 sx={{ 
-                  transition: 'transform 0.2s',
+                  width: 32, 
+                  height: 32, 
+                  bgcolor: !user?.avatar_url ? '#0d47a1' : 'transparent',
+                  '& img': {
+                    objectFit: 'cover',
+                    width: '100%',
+                    height: '100%'
+                  }
+                }}
+              >
+                {!user?.avatar_url && user?.username?.charAt(0).toUpperCase()}
+              </Avatar>
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              PaperProps={{
+                sx: {
+                  mt: 1,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  border: '1px solid rgba(0,0,0,0.08)',
+                  borderRadius: 2
+                }
+              }}
+            >
+              <MenuItem 
+                onClick={handleProfile}
+                sx={{
                   '&:hover': {
-                    transform: 'scale(1.1)'
+                    bgcolor: 'rgba(25, 118, 210, 0.08)'
                   }
                 }}
               >
-                <Avatar
-                  alt={user.full_name || user.email}
-                  src={user.avatar_url}
-                  sx={{ width: 32, height: 32 }}
-                />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                PaperProps={{
-                  sx: {
-                    mt: 1,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    borderRadius: 2
+                <ListItemIcon>
+                  <PersonIcon fontSize="small" sx={{ color: '#1976d2' }} />
+                </ListItemIcon>
+                <ListItemText primary="Perfil" />
+              </MenuItem>
+              <MenuItem 
+                onClick={handleLogout}
+                sx={{
+                  color: '#dc2626',
+                  '&:hover': {
+                    bgcolor: 'rgba(220, 38, 38, 0.08)'
                   }
                 }}
               >
-                <MenuItem 
-                  onClick={handleLogout}
-                  sx={{
-                    color: '#dc2626',
-                    '&:hover': {
-                      bgcolor: 'rgba(220, 38, 38, 0.08)'
-                    }
-                  }}
-                >
-                  <ListItemIcon>
-                    <LogoutIcon fontSize="small" sx={{ color: '#dc2626' }} />
-                  </ListItemIcon>
-                  <ListItemText primary="Sair" />
-                </MenuItem>
-              </Menu>
-            </Box>
-          )}
+                <ListItemIcon>
+                  <LogoutIcon fontSize="small" sx={{ color: '#dc2626' }} />
+                </ListItemIcon>
+                <ListItemText primary="Sair" />
+              </MenuItem>
+            </Menu>
+          </Box>
         </Toolbar>
       </AppBar>
+
       <Drawer
         variant="permanent"
         sx={{
@@ -254,13 +282,15 @@ export default function Layout() {
           </List>
         </Box>
       </Drawer>
+
       <Box
         component="main"
-        sx={{ 
-          flexGrow: 1, 
+        sx={{
+          flexGrow: 1,
           p: 3,
-          transition: 'margin 0.3s ease-in-out',
+          width: `calc(100% - ${drawerWidth}px)`,
           marginLeft: isOpen ? 0 : `-${drawerWidth}px`,
+          transition: 'margin-left 0.3s ease-in-out',
         }}
       >
         <Toolbar />
@@ -268,4 +298,4 @@ export default function Layout() {
       </Box>
     </Box>
   );
-} 
+}

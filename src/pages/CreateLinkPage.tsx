@@ -11,7 +11,7 @@ import {
   Container,
   Snackbar,
 } from '@mui/material';
-import { supabase } from '../services/supabase';
+import { supabase, getCurrentUser } from '../services/supabase';
 
 export default function CreateLinkPage() {
   const navigate = useNavigate();
@@ -54,8 +54,8 @@ export default function CreateLinkPage() {
         ? form.destinationUrl
         : `https://${form.destinationUrl}`;
 
-      const { data: userData } = await supabase.auth.getSession();
-      if (!userData.session?.user) {
+      const user = await getCurrentUser();
+      if (!user) {
         throw new Error('Usuário não autenticado');
       }
 
@@ -65,7 +65,7 @@ export default function CreateLinkPage() {
           title: form.title,
           slug: form.slug,
           destination_url: formattedUrl,
-          user_id: userData.session.user.id
+          user_id: user.id
         }]);
 
       if (error) throw error;

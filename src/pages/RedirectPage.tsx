@@ -1,36 +1,66 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { CircularProgress, Box, Typography, Button } from '@mui/material';
-import { getLinkBySlug } from '../services/supabase';
+import { Box, Typography, CircularProgress } from '@mui/material';
+import { supabase } from '../services/supabase';
 
-function RedirectPage() {
-  const { slug } = useParams<{ slug: string }>();
+interface Link {
+  destination_url: string;
+  clicks: number;
+}
+
+export default function RedirectPage() {
+  const { slug } = useParams();
   const navigate = useNavigate();
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const redirectToDestination = async () => {
       try {
         if (!slug) {
-          navigate('/admin');
+          setError('Link inválido');
           return;
         }
 
-        const link = await getLinkBySlug(slug);
-        
-        if (!link) {
+        console.log('Tentando redirecionar slug:', slug);
+
+        // Primeiro, vamos verificar se o link existe
+        const { data: linkData, error: linkError } = await supabase
+          .from('links')
+          .select('destination_url, clicks')
+          .eq('slug', slug)
+          .single();
+
+        if (linkError || !linkData) {
+          console.error('Link não encontrado:', linkError);
           setError('Link não encontrado');
           return;
         }
 
-        const destinationUrl = link.destination_url.startsWith('http://') || link.destination_url.startsWith('https://')
-          ? link.destination_url
-          : `https://${link.destination_url}`;
+        const link = linkData as Link;
+        console.log('Link encontrado:', link);
 
-        window.location.href = destinationUrl;
-      } catch (err) {
-        setError('Erro ao buscar o link');
-        console.error(err);
+        // Se o link existe, vamos incrementar o contador
+        const { data: updateData, error: updateError } = await supabase
+          .from('links')
+          .update({ clicks: (link.clicks || 0) + 1 })
+          .eq('slug', slug)
+          .select('destination_url')
+          .single();
+
+        if (updateError) {
+          console.error('Erro ao atualizar cliques:', updateError);
+          // Mesmo se der erro ao atualizar cliques, vamos redirecionar
+          window.location.href = link.destination_url;
+          return;
+        }
+
+        console.log('Cliques atualizados, redirecionando...');
+
+        // Redirecionar para o destino
+        window.location.href = updateData.destination_url;
+      } catch (error) {
+        console.error('Erro ao redirecionar:', error);
+        setError('Erro ao processar redirecionamento');
       }
     };
 
@@ -39,44 +69,42 @@ function RedirectPage() {
 
   if (error) {
     return (
-      <Box
-        display="flex"
-        flexDirection="column"
-        alignItems="center"
-        justifyContent="center"
+      <Box 
+        display="flex" 
+        flexDirection="column" 
+        alignItems="center" 
+        justifyContent="center" 
         minHeight="100vh"
+        gap={2}
       >
-        <Typography variant="h5" color="error" gutterBottom>
+        <Typography variant="h6" color="error">
           {error}
         </Typography>
-        <Typography variant="body1">
-          O link solicitado não foi encontrado ou não está mais disponível.
-        </Typography>
-        <Button 
-          variant="contained" 
-          onClick={() => navigate('/admin')} 
-          sx={{ mt: 2 }}
+        <Typography 
+          variant="body2" 
+          color="primary" 
+          sx={{ cursor: 'pointer' }}
+          onClick={() => navigate('/')}
         >
-          Voltar ao Painel
-        </Button>
+          Voltar para página inicial
+        </Typography>
       </Box>
     );
   }
 
   return (
-    <Box
-      display="flex"
-      flexDirection="column"
-      alignItems="center"
-      justifyContent="center"
+    <Box 
+      display="flex" 
+      flexDirection="column" 
+      alignItems="center" 
+      justifyContent="center" 
       minHeight="100vh"
+      gap={2}
     >
-      <CircularProgress />
-      <Typography variant="h6" sx={{ mt: 2 }}>
+      <CircularProgress size={40} />
+      <Typography variant="body1" color="textSecondary">
         Redirecionando...
       </Typography>
     </Box>
   );
-}
-
-export default RedirectPage; 
+} 
