@@ -10,10 +10,26 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
+  IconButton,
+  InputAdornment,
+  useTheme,
+  useMediaQuery,
+  Fade,
 } from '@mui/material';
+import {
+  Person as PersonIcon,
+  PhotoCamera as PhotoCameraIcon,
+  Save as SaveIcon,
+  ArrowBack as ArrowBackIcon,
+  AlternateEmail as AlternateEmailIcon,
+} from '@mui/icons-material';
 import { supabase, getCurrentUser } from '../services/supabase';
+import { useNavigate } from 'react-router-dom';
 
 function ProfilePage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -53,6 +69,63 @@ function ProfilePage() {
         throw new Error('Você precisa selecionar uma imagem para upload.');
       }
 
+      const file = event.target.files[0];
+      
+      // Redimensionar a imagem antes do upload
+      const resizedImage = await new Promise<File>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          // Definir tamanho ideal para avatar (400x400 para garantir boa qualidade)
+          const maxSize = 400;
+          let width = img.width;
+          let height = img.height;
+          
+          // Manter aspecto e redimensionar para o tamanho máximo
+          if (width > height) {
+            if (width > maxSize) {
+              height = Math.round((height * maxSize) / width);
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = Math.round((width * maxSize) / height);
+              height = maxSize;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Não foi possível criar o contexto do canvas'));
+            return;
+          }
+          
+          // Melhorar a qualidade do redimensionamento
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Não foi possível converter a imagem'));
+              return;
+            }
+            const fileExt = file.name.split('.').pop();
+            const newFile = new File([blob], file.name, {
+              type: `image/${fileExt}`,
+              lastModified: Date.now(),
+            });
+            resolve(newFile);
+          }, file.type, 1.0); // Qualidade máxima
+        };
+        img.onerror = () => reject(new Error('Erro ao carregar a imagem'));
+        img.src = URL.createObjectURL(file);
+      });
+
       // Se existe uma foto anterior, vamos excluí-la
       if (user.avatar_url) {
         try {
@@ -61,7 +134,6 @@ function ProfilePage() {
           
           console.log('Verificando arquivo existente:', oldFileName);
           
-          // Primeiro, verifica se o arquivo existe
           const { data: existingFiles, error: listError } = await supabase.storage
             .from('avatars')
             .list('', {
@@ -74,7 +146,6 @@ function ProfilePage() {
             console.log('Arquivos encontrados:', existingFiles);
             
             if (existingFiles && existingFiles.length > 0) {
-              // Arquivo encontrado, tenta excluir
               const { error: deleteError } = await supabase.storage
                 .from('avatars')
                 .remove([oldFileName]);
@@ -83,22 +154,7 @@ function ProfilePage() {
                 console.error('Erro ao excluir foto antiga:', deleteError);
               } else {
                 console.log('Arquivo antigo excluído com sucesso:', oldFileName);
-                
-                // Verifica se o arquivo foi realmente excluído
-                const { data: checkFiles } = await supabase.storage
-                  .from('avatars')
-                  .list('', {
-                    search: oldFileName
-                  });
-                
-                if (checkFiles && checkFiles.length === 0) {
-                  console.log('Confirmado: arquivo foi excluído');
-                } else {
-                  console.log('Aviso: arquivo ainda parece existir após tentativa de exclusão');
-                }
               }
-            } else {
-              console.log('Arquivo antigo não encontrado:', oldFileName);
             }
           }
         } catch (deleteError) {
@@ -106,17 +162,14 @@ function ProfilePage() {
         }
       }
 
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      // Usar timestamp para garantir nome único
+      const fileExt = resizedImage.name.split('.').pop();
       const fileName = `${user.id}-${Date.now()}.${fileExt}`;
 
       console.log('Fazendo upload do novo arquivo:', fileName);
 
-      // Upload da nova imagem
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file);
+        .upload(fileName, resizedImage);
 
       if (uploadError) {
         throw uploadError;
@@ -124,7 +177,6 @@ function ProfilePage() {
 
       console.log('Upload concluído com sucesso');
 
-      // Get public URL
       const { data } = supabase.storage
         .from('avatars')
         .getPublicUrl(fileName);
@@ -132,7 +184,6 @@ function ProfilePage() {
       const newAvatarUrl = data.publicUrl;
       console.log('Nova URL do avatar:', newAvatarUrl);
 
-      // Update user profile
       const { error: updateError } = await supabase
         .from('usuarios')
         .update({ avatar_url: newAvatarUrl })
@@ -192,116 +243,226 @@ function ProfilePage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Paper elevation={0} sx={{ p: 4, borderRadius: 2, bgcolor: 'white' }}>
-        <Typography variant="h5" sx={{ mb: 4, fontWeight: 600, color: '#1e293b' }}>
-          Configurações do Perfil
-        </Typography>
+    <Box sx={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
+      py: { xs: 0, sm: 4 }
+    }}>
+      <Container maxWidth="sm" sx={{ px: { xs: 0, sm: 3 } }}>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            borderRadius: { xs: 0, sm: '24px' },
+            overflow: 'hidden',
+            border: { xs: 'none', sm: '1px solid' },
+            borderColor: { xs: 'transparent', sm: 'rgba(0,0,0,0.08)' },
+            bgcolor: '#ffffff',
+            boxShadow: { xs: 'none', sm: '0 4px 40px rgba(0,0,0,0.03)' },
+            minHeight: { xs: '100vh', sm: 'auto' }
+          }}
+        >
+          {/* Header */}
+          <Box sx={{ 
+            p: { xs: 2, sm: 3 }, 
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            background: 'linear-gradient(145deg, #f8fafc 0%, #ffffff 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2
+          }}>
+            <IconButton 
+              onClick={() => navigate(-1)}
+              sx={{
+                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                '&:hover': {
+                  bgcolor: 'rgba(25, 118, 210, 0.16)',
+                  transform: 'translateX(-2px)'
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              <ArrowBackIcon />
+            </IconButton>
+            <Box>
+              <Typography variant="h5" sx={{ 
+                fontWeight: 700, 
+                color: '#1e293b',
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                letterSpacing: '-0.02em'
+              }}>
+                Configurações do Perfil
+              </Typography>
+              <Typography variant="body2" sx={{ 
+                color: '#64748b',
+                fontWeight: 500,
+                display: { xs: 'none', sm: 'block' }
+              }}>
+                Gerencie suas informações pessoais
+              </Typography>
+            </Box>
+          </Box>
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
-          <Avatar
-            src={avatarUrl || undefined}
-            sx={{
-              width: 120,
-              height: 120,
-              mb: 2,
-              bgcolor: !avatarUrl ? '#1976d2' : 'transparent',
-              fontSize: '3rem',
-              border: '4px solid #fff',
-              boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.12)',
-              position: 'relative',
-              overflow: 'hidden',
-              '& .MuiAvatar-img': {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }
-            }}
-          >
-            {!avatarUrl && username.charAt(0).toUpperCase()}
-          </Avatar>
+          {/* Content */}
+          <Box sx={{ p: { xs: 2, sm: 3 } }}>
+            {/* Avatar Section */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              mb: 4,
+              position: 'relative'
+            }}>
+              <Avatar
+                src={avatarUrl || undefined}
+                sx={{
+                  width: { xs: 120, sm: 140 },
+                  height: { xs: 120, sm: 140 },
+                  mb: 2,
+                  bgcolor: !avatarUrl ? '#1976d2' : 'transparent',
+                  fontSize: '3rem',
+                  border: '4px solid #fff',
+                  boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.12)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '& .MuiAvatar-img': {
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    transform: 'scale(1.02)'
+                  }
+                }}
+              >
+                {!avatarUrl && username.charAt(0).toUpperCase()}
+              </Avatar>
 
-          <Button
-            component="label"
-            variant="outlined"
-            disabled={uploading}
-            sx={{ 
-              textTransform: 'none',
-              borderColor: '#1976d2',
-              color: '#1976d2',
-              '&:hover': {
-                borderColor: '#1565c0',
-                bgcolor: 'rgba(25, 118, 210, 0.04)'
-              }
-            }}
-          >
-            {uploading ? 'Enviando...' : 'Alterar Foto de Perfil'}
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={handleAvatarChange}
-              disabled={uploading}
-            />
-          </Button>
-        </Box>
+              <Button
+                component="label"
+                variant="outlined"
+                disabled={uploading}
+                startIcon={<PhotoCameraIcon />}
+                sx={{ 
+                  textTransform: 'none',
+                  borderColor: '#1976d2',
+                  color: '#1976d2',
+                  borderRadius: '12px',
+                  px: 3,
+                  py: { xs: 1.2, sm: 1 },
+                  fontSize: { xs: '0.9375rem', sm: '0.875rem' },
+                  fontWeight: 600,
+                  '&:hover': {
+                    borderColor: '#1565c0',
+                    bgcolor: 'rgba(25, 118, 210, 0.04)',
+                    transform: 'translateY(-1px)'
+                  },
+                  transition: 'all 0.2s ease-in-out'
+                }}
+              >
+                {uploading ? 'Enviando...' : 'Alterar Foto'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  disabled={uploading}
+                />
+              </Button>
+            </Box>
 
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, color: '#64748b' }}>
-            Nome de Usuário
-          </Typography>
-          <TextField
-            fullWidth
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder="Digite seu nome de usuário"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                bgcolor: 'white',
-                '&:hover .MuiOutlinedInput-notchedOutline': {
-                  borderColor: '#1976d2'
-                }
-              }
-            }}
-          />
-        </Box>
+            {/* Username Section */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="subtitle2" sx={{ 
+                mb: 1, 
+                color: '#64748b',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1
+              }}>
+                <PersonIcon sx={{ fontSize: 20 }} />
+                Nome de Usuário
+              </Typography>
+              <TextField
+                fullWidth
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Digite seu nome de usuário"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AlternateEmailIcon sx={{ color: '#64748b' }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px',
+                    bgcolor: '#f8fafc',
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2'
+                    },
+                    '& .MuiOutlinedInput-input': {
+                      py: { xs: 1.8, sm: 1.5 }
+                    }
+                  }
+                }}
+              />
+            </Box>
 
-        <Button
-          variant="contained"
-          onClick={handleUsernameUpdate}
-          disabled={loading}
+            {/* Save Button */}
+            <Button
+              variant="contained"
+              onClick={handleUsernameUpdate}
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+              fullWidth
+              sx={{
+                borderRadius: '12px',
+                py: { xs: 1.8, sm: 1.5 },
+                textTransform: 'none',
+                fontSize: { xs: '0.9375rem', sm: '0.875rem' },
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)'
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </Box>
+        </Paper>
+
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={6000}
+          onClose={handleCloseNotification}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
           sx={{
-            textTransform: 'none',
-            bgcolor: '#1976d2',
-            '&:hover': {
-              bgcolor: '#1565c0'
+            '& .MuiAlert-root': {
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
             }
           }}
         >
-          Salvar Alterações
-        </Button>
-      </Paper>
-
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={6000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={handleCloseNotification}
-          severity={notification.type}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
-          {notification.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+          <Alert
+            onClose={handleCloseNotification}
+            severity={notification.type}
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
+      </Container>
+    </Box>
   );
 }
 

@@ -23,6 +23,9 @@ import {
   Paper,
   Snackbar,
   Alert,
+  Avatar,
+  InputBase,
+  InputAdornment,
 } from '@mui/material';
 import {
   ContentCopy as ContentCopyIcon,
@@ -34,6 +37,11 @@ import {
   Info as InfoIcon,
   Close as CloseIcon,
   Add as AddIcon,
+  Refresh as RefreshIcon,
+  Search as SearchIcon,
+  Clear as ClearIcon,
+  Title as TitleIcon,
+  InsertLink as InsertLinkIcon,
 } from '@mui/icons-material';
 import { supabase } from '../services/supabase';
 import { getCurrentUser } from '../services/supabase';
@@ -57,6 +65,7 @@ function HomePage() {
     message: '',
     type: 'success'
   });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const checkUser = async () => {
@@ -90,7 +99,7 @@ function HomePage() {
     try {
       const { data, error } = await supabase
         .from('links')
-        .select('*')
+        .select('id, title, slug, destination_url, created_at, clicks')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -184,6 +193,16 @@ function HomePage() {
     setNotification(prev => ({ ...prev, open: false }));
   };
 
+  // Filtrar os links baseado no termo de pesquisa
+  const filteredLinks = links.filter(link => {
+    const searchTermLower = searchTerm.toLowerCase();
+    return (
+      link.title?.toLowerCase().includes(searchTermLower) ||
+      link.slug.toLowerCase().includes(searchTermLower) ||
+      link.destination_url.toLowerCase().includes(searchTermLower)
+    );
+  });
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -193,732 +212,960 @@ function HomePage() {
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Box sx={{ maxWidth: '600px', mx: 'auto' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TimeIcon sx={{ color: '#666', fontSize: 20 }} />
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-              Links Criados
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            onClick={() => navigate('/criar-link')}
-            startIcon={<AddIcon />}
+    <Box sx={{ 
+      minHeight: '100%',
+      background: 'linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)',
+      py: { xs: 0, sm: 4 },
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center'
+    }}>
+      <Container 
+        maxWidth="md" 
+        sx={{ 
+          px: { xs: 0, sm: 3 },
+          maxWidth: { sm: '800px' },
+          margin: '0 auto'
+        }}
+      >
+        {/* Card Principal */}
+        <Paper 
+          elevation={0} 
             sx={{ 
-              px: 2,
-              py: 0.75,
-              bgcolor: '#1976d2',
-              textTransform: 'none',
-              fontWeight: 500,
-              boxShadow: 'none',
-              fontSize: '0.875rem',
+            borderRadius: { xs: 0, sm: '24px' },
+            overflow: 'hidden',
+            border: { xs: 'none', sm: '1px solid' },
+            borderColor: { xs: 'transparent', sm: 'rgba(0,0,0,0.08)' },
+            bgcolor: '#ffffff',
+            boxShadow: { xs: 'none', sm: '0 4px 40px rgba(0,0,0,0.03)' },
+            transition: 'all 0.3s ease-in-out',
+            minHeight: { xs: '100vh', sm: 'auto' },
               '&:hover': {
-                bgcolor: '#1565c0',
-                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.16)',
-              }
+              boxShadow: { xs: 'none', sm: '0 4px 40px rgba(0,0,0,0.06)' },
+              transform: { xs: 'none', sm: 'translateY(-2px)' },
+              borderColor: { xs: 'transparent', sm: 'rgba(25, 118, 210, 0.2)' }
+            }
+          }}
+        >
+          {/* Cabeçalho Estilizado */}
+          <Box 
+            sx={{ 
+              p: { xs: 2.5, sm: 4 },
+              background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)',
+              borderBottom: '1px solid',
+              borderColor: 'divider'
             }}
           >
-            Criar Novo Link
-          </Button>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between', 
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: { xs: 2, sm: 2 }
+            }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ 
+                  bgcolor: 'primary.main', 
+                  p: 1.5,
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 20px rgba(25, 118, 210, 0.2)',
+                  transform: 'rotate(-5deg)'
+                }}>
+                  <TimeIcon sx={{ 
+                    fontSize: { xs: 24, sm: 28 }, 
+                    color: '#fff',
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                  }} />
         </Box>
-
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-          <Typography variant="caption" sx={{ color: '#666' }}>
-            {links.length} links criados
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontWeight: 700, 
+                    color: '#1e293b',
+                    fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                    letterSpacing: '-0.02em',
+                    mb: 0.5
+                  }}>
+                    Links Criados
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: '#64748b',
+                    fontWeight: 500,
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}>
+                    Gerencie todos os seus links encurtados
           </Typography>
+                </Box>
         </Box>
         
-        <Grid container spacing={1.5}>
-          {links.map((link) => {
-            const shortUrl = getShortUrl(link.slug);
-            
-            return (
-              <React.Fragment key={link.id}>
-                <Grid item xs={12}>
-                  <Zoom in={true} style={{ transitionDelay: '100ms' }}>
-                <Card 
-                  elevation={0}
+              <Box sx={{ 
+                display: 'flex', 
+                gap: 1.5, 
+                alignItems: 'center',
+                width: { xs: '100%', sm: 'auto' }
+              }}>
+                <Tooltip title="Atualizar lista" arrow placement="left">
+                  <IconButton 
+                    onClick={loadLinks} 
+                    disabled={loading}
                   sx={{ 
-                    border: '1px solid #e0e0e0',
-                    borderRadius: 2,
-                        transition: 'all 0.3s ease-in-out',
-                        position: 'relative',
-                        overflow: 'visible',
+                      width: { xs: 40, sm: 42 },
+                      height: { xs: 40, sm: 42 },
+                      bgcolor: 'rgba(25, 118, 210, 0.08)',
+                      backdropFilter: 'blur(8px)',
                     '&:hover': {
-                      borderColor: '#1976d2',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                        bgcolor: 'rgba(25, 118, 210, 0.16)',
+                        transform: 'translateY(-2px)'
+                      },
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                  >
+                    <RefreshIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                  </IconButton>
+                </Tooltip>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate('/criar-link')}
+                              sx={{ 
+                    height: { xs: 40, sm: 42 },
+                    px: { xs: 2, sm: 3 },
+                    flex: { xs: 1, sm: 'none' },
+                    borderRadius: '12px',
+                    textTransform: 'none',
+                    fontSize: { xs: '0.875rem', sm: '0.95rem' },
+                                fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                    background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)'
+                    },
+                    transition: 'all 0.2s ease-in-out'
+                  }}
+                >
+                  Novo Link
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Lista de Links */}
+          <Box sx={{ 
+            p: { xs: 2, sm: 3 },
+            pb: { xs: 4, sm: 3 }
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: 'column',
+              gap: { xs: 2, sm: 3 }
+            }}>
+              <Paper
+                elevation={0}
+                          sx={{ 
+                  p: { xs: 2, sm: 2.5 },
+                  borderRadius: { xs: 0, sm: '24px' },
+                  border: { xs: 'none', sm: '1px solid rgba(0,0,0,0.08)' },
+                  mx: { xs: -2, sm: 0 },
+                  bgcolor: '#fff',
+                  position: 'sticky',
+                  top: 88,
+                  zIndex: 2,
+                  boxShadow: { 
+                    xs: '0 1px 2px rgba(0,0,0,0.05)', 
+                    sm: '0 4px 12px rgba(0,0,0,0.05)' 
+                  }
+                }}
+              >
+                      <Box 
+                        sx={{ 
+                    display: 'flex',
+                          alignItems: 'center',
+                    gap: 1.5,
+                    bgcolor: '#f8fafc',
+                    borderRadius: '12px',
+                    p: '4px',
+                    pl: 2,
+                                  transition: 'all 0.2s ease-in-out',
+                    '&:focus-within': {
+                      bgcolor: '#fff',
+                      boxShadow: '0 0 0 2px #1976d2',
+                      '& .search-icon': {
+                        color: '#1976d2'
+                      }
                     }
                   }}
                 >
-                  <CardContent sx={{ p: '12px !important' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-                            <Typography 
-                              variant="h6" 
-                              sx={{ 
-                                fontSize: '1rem',
-                                fontWeight: 600,
-                                color: '#1976d2',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 1,
-                                WebkitBoxOrient: 'vertical',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis'
-                              }}
-                            >
-                              {link.title || 'Link sem título'}
-                            </Typography>
-                            
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Chip 
-                          label={link.slug}
-                          size="small"
-                          sx={{ 
-                            backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                            color: '#1976d2',
-                            fontWeight: 500,
-                                  height: '24px',
-                                  borderRadius: '6px',
-                                  minWidth: 'fit-content'
-                          }}
-                        />
-                      <Box 
-                        sx={{ 
-                                  display: 'inline-flex',
-                          alignItems: 'center',
-                                  gap: 1,
-                          backgroundColor: 'rgba(25, 118, 210, 0.04)',
-                                  borderRadius: '8px',
-                                  padding: '4px 12px',
-                                  transition: 'all 0.2s ease-in-out',
-                                  maxWidth: 'fit-content',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(25, 118, 210, 0.08)',
-                                  }
-                                }}
-                              >
-                                <Typography
+                  <SearchIcon 
+                    className="search-icon"
                                   sx={{
-                                    color: '#1976d2',
-                                    fontSize: '0.875rem',
-                                    fontWeight: 500,
-                                    display: 'inline-block',
-                                    whiteSpace: 'nowrap'
-                                  }}
-                                >
-                                  {shortUrl}
-                                </Typography>
-                                <Tooltip title="Acessar Link">
+                      fontSize: { xs: 20, sm: 22 },
+                      color: '#64748b',
+                      transition: 'color 0.2s ease-in-out'
+                    }} 
+                  />
+                  <InputBase
+                    placeholder="Pesquisar links..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{
+                      flex: 1,
+                      fontSize: { xs: '0.9375rem', sm: '1rem' },
+                      '& .MuiInputBase-input': {
+                        py: 1,
+                        px: 0,
+                        color: '#1e293b',
+                        '&::placeholder': {
+                          color: '#94a3b8',
+                          opacity: 1
+                        }
+                      }
+                    }}
+                  />
+                  {searchTerm && (
                                   <IconButton
-                          href={shortUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
                                     size="small"
+                      onClick={() => setSearchTerm('')}
                           sx={{
-                            color: '#1976d2',
-                                      padding: '4px',
+                        color: '#94a3b8',
+                        p: '6px',
+                        mr: 0.5,
                                       '&:hover': { 
-                                        color: '#2e7d32',
-                                        transform: 'scale(1.1)'
+                          bgcolor: 'rgba(0,0,0,0.04)',
+                          color: '#64748b'
                                       }
                                     }}
                                   >
-                                    <LaunchIcon sx={{ fontSize: 16 }} />
+                      <ClearIcon sx={{ fontSize: 18 }} />
                                   </IconButton>
-                                </Tooltip>
+                  )}
                               </Box>
-                            </Box>
-                          </Box>
+              </Paper>
 
-                          <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
-                            <Tooltip title="Mais Informações">
-                              <IconButton
-                                onClick={() => setOpenPopupId(link.id)}
-                                size="small"
+              <Grid container spacing={2}>
+                {filteredLinks.map((link) => {
+                  const shortUrl = getShortUrl(link.slug);
+                  
+                  return (
+                    <Grid item xs={12} key={link.id}>
+                      <Card 
+                        elevation={0}
                                 sx={{ 
-                                  color: '#666',
-                                  transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  position: 'relative',
-                                  top: 0,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: { xs: 2, sm: 3 },
+                          transition: 'all 0.3s ease-in-out',
                             '&:hover': {
-                                    color: '#1976d2',
-                                    transform: 'scale(1.1)',
-                                    backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                            borderColor: 'primary.main',
+                            transform: { xs: 'none', sm: 'translateY(-2px)' },
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
                                   },
                                   '&:active': {
-                                    transform: 'scale(0.9)',
-                                    top: '1px',
-                                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                                  }
-                                }}
-                              >
-                                <InfoIcon sx={{ fontSize: 18 }} />
-                              </IconButton>
-                            </Tooltip>
-                        <Tooltip title="Copiar Link">
-                          <IconButton 
-                            onClick={() => handleCopyLink(shortUrl)}
-                            size="small"
+                            transform: { xs: 'scale(0.99)', sm: 'translateY(-2px)' },
+                            bgcolor: 'rgba(0,0,0,0.01)'
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ 
+                          p: { xs: 1.5, sm: 3 },
+                          '&:last-child': { pb: { xs: 1.5, sm: 3 } }
+                        }}>
+                          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
+                            <Grid item xs={12}>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, sm: 1.5 } }}>
+                                {/* Título e Data */}
+                                <Box sx={{ 
+                                  display: 'flex', 
+                                  flexDirection: 'column',
+                                  gap: { xs: 1, sm: 0.5 }
+                                }}>
+                                  <Box sx={{ 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    flex: 1,
+                                    minWidth: 0
+                                  }}>
+                                    <Box
                             sx={{ 
-                              color: copySuccess === shortUrl ? '#4caf50' : '#666',
-                                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        minWidth: { xs: 18, sm: 24 },
+                                        height: { xs: 18, sm: 24 },
+                                        borderRadius: '50%',
+                                        bgcolor: '#1976d2',
+                                        color: '#fff',
+                                        fontSize: { xs: '0.6875rem', sm: '0.8125rem' },
+                                        fontWeight: 600,
+                                        flexShrink: 0,
+                                        boxShadow: '0 2px 8px rgba(25, 118, 210, 0.25)'
+                                      }}
+                                    >
+                                      {link.clicks || 0}
+                                    </Box>
+                                    <Typography 
+                                      variant="h6" 
+                                      sx={{ 
+                                        fontWeight: 600,
+                                        color: '#1e293b',
+                                        fontSize: { xs: '0.9375rem', sm: '1.0625rem' },
+                                        lineHeight: 1.4,
+                                        flex: 1,
+                                        minWidth: 0,
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        letterSpacing: '-0.01em',
+                                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                                        textShadow: '0 1px 1px rgba(255, 255, 255, 0.8)',
                                   '&:hover': { 
-                                    color: '#1976d2',
-                                    transform: 'scale(1.15) rotate(8deg)',
-                                    backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                                          color: '#0f172a'
+                                        },
+                                        transition: 'color 0.2s ease-in-out'
+                                      }}
+                                    >
+                                      {link.title || 'Link sem título'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+
+                                {/* Links e Ações */}
+                                <Box sx={{ 
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: { xs: 1, sm: 1 }
+                                }}>
+                                  {/* Mobile View */}
+                                  <Box sx={{ 
+                                    display: { xs: 'flex', sm: 'none' },
+                                    gap: 1,
+                                    alignItems: 'center'
+                                  }}>
+                                    <Button
+                                      onClick={() => setOpenPopupId(link.id)}
+                                      sx={{
+                                        flex: 1,
+                                        height: 36,
+                                        bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                        color: 'primary.main',
+                                        border: '1px solid',
+                                        borderColor: 'rgba(25, 118, 210, 0.1)',
+                                        borderRadius: 1.5,
+                                        px: 1.5,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: 1,
+                                        textTransform: 'none',
+                                        fontWeight: 600,
+                                        fontSize: '0.8125rem',
+                                        '&:hover': {
+                                          bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                        },
+                                        '&:active': {
+                                          transform: 'scale(0.98)'
+                                        }
+                                      }}
+                                    >
+                                      <LinkIcon sx={{ fontSize: 16 }} />
+                                      Ver Links
+                                    </Button>
+
+                                    <IconButton
+                                      onClick={() => handleEditClick(link)}
+                                      size="small"
+                                      sx={{
+                                        width: 36,
+                                        height: 36,
+                                        color: '#1976d2',
+                                        bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                        border: '1px solid',
+                                        borderColor: 'rgba(25, 118, 210, 0.1)',
+                                        '&:hover': {
+                                          bgcolor: 'rgba(25, 118, 210, 0.08)'
+                                        }
+                                      }}
+                                    >
+                                      <EditIcon sx={{ fontSize: 16 }} />
+                                    </IconButton>
+
+                                    <IconButton
+                                      onClick={() => handleDeleteClick(link)}
+                                      size="small"
+                                      sx={{
+                                        width: 36,
+                                        height: 36,
+                                        color: '#dc2626',
+                                        bgcolor: 'rgba(220, 38, 38, 0.04)',
+                                        border: '1px solid',
+                                        borderColor: 'rgba(220, 38, 38, 0.1)',
+                                        '&:hover': {
+                                          bgcolor: 'rgba(220, 38, 38, 0.08)'
+                                        }
+                                      }}
+                                    >
+                                      <DeleteIcon sx={{ fontSize: 16 }} />
+                                    </IconButton>
+                                  </Box>
+
+                                  {/* Desktop View */}
+                                  <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 2, alignItems: 'center' }}>
+                                    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                      <Button
+                                        onClick={() => setOpenPopupId(link.id)}
+                                        sx={{
+                                          width: '100%',
+                                          height: 42,
+                                          bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                          color: 'primary.main',
+                                          border: '1px solid',
+                                          borderColor: 'rgba(25, 118, 210, 0.1)',
+                                          borderRadius: 2,
+                                          px: 2,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: 1,
+                                          textTransform: 'none',
+                                          fontWeight: 600,
+                                          fontSize: '0.875rem',
+                                          '&:hover': {
+                                            bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                            borderColor: 'rgba(25, 118, 210, 0.2)'
                                   },
                                   '&:active': {
-                                    transform: 'scale(0.95) rotate(0deg)',
-                                  }
-                                }}
-                              >
-                                <ContentCopyIcon sx={{ fontSize: 18 }} />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Editar">
+                                            transform: 'scale(0.98)'
+                                          }
+                                        }}
+                                      >
+                                        <LinkIcon sx={{ fontSize: 18 }} />
+                                        Ver Links
+                                      </Button>
+
+                                      <Typography 
+                                        sx={{ 
+                                          color: '#64748b',
+                                          fontSize: { xs: '0.6875rem', sm: '0.75rem' },
+                                          fontWeight: 500,
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: 0.5,
+                                          '& .MuiSvgIcon-root': {
+                                            fontSize: { xs: 12, sm: 14 },
+                                            color: '#94a3b8',
+                                            opacity: 0.8
+                                          }
+                                        }}
+                                      >
+                                        <TimeIcon />
+                                        {new Date(link.created_at).toLocaleDateString('pt-BR', {
+                                          day: '2-digit',
+                                          month: 'short'
+                                        })}
+                                      </Typography>
+                                    </Box>
+
                               <IconButton
                                 onClick={() => handleEditClick(link)}
                                 size="small"
                                 sx={{ 
-                                  color: '#666',
-                                  transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  position: 'relative',
-                                  top: 0,
-                                  '&:hover': { 
+                                        width: 42,
+                                        height: 42,
                                     color: '#1976d2',
-                                    transform: 'scale(1.1)',
-                                    backgroundColor: 'rgba(25, 118, 210, 0.08)'
-                                  },
-                                  '&:active': {
-                                    transform: 'scale(0.9)',
-                                    top: '1px',
-                                    boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                                        bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                        border: '1px solid',
+                                        borderColor: 'rgba(25, 118, 210, 0.1)',
+                                        '&:hover': {
+                                          bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                          borderColor: 'rgba(25, 118, 210, 0.2)'
                                   }
                                 }}
                               >
                                 <EditIcon sx={{ fontSize: 18 }} />
                               </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Excluir">
+
                               <IconButton
                                 onClick={() => handleDeleteClick(link)}
                                 size="small"
                                 sx={{ 
-                                  color: '#666',
-                                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                        width: 42,
+                                        height: 42,
+                                        color: '#dc2626',
+                                        bgcolor: 'rgba(220, 38, 38, 0.04)',
+                                        border: '1px solid',
+                                        borderColor: 'rgba(220, 38, 38, 0.1)',
                                   '&:hover': { 
-                                    color: '#d32f2f',
-                                    transform: 'scale(1.15) rotate(8deg)',
-                                    backgroundColor: 'rgba(211, 47, 47, 0.08)'
-                                  },
-                                  '&:active': {
-                                    transform: 'scale(0.95) rotate(0deg)',
+                                          bgcolor: 'rgba(220, 38, 38, 0.08)',
+                                          borderColor: 'rgba(220, 38, 38, 0.2)'
                                   }
                                 }}
                               >
                                 <DeleteIcon sx={{ fontSize: 18 }} />
                           </IconButton>
-                        </Tooltip>
                           </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Zoom>
-                </Grid>
-                {openPopupId === link.id && (
+
+                                  {/* Modal para exibir URLs (agora visível em ambos mobile e desktop) */}
                   <Dialog
-                    open={true}
+                                    open={openPopupId === link.id}
                     onClose={() => setOpenPopupId(null)}
-                    maxWidth="sm"
+                                    TransitionComponent={Fade}
                     fullWidth
-                    PaperProps={{
-                      sx: {
+                                    maxWidth="xs"
+                                    sx={{ 
+                                      '& .MuiDialog-paper': { 
+                                        m: 2, 
                         borderRadius: 3,
-                        boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
-                      }
-                    }}
-                  >
-                    <DialogTitle 
-                      sx={{ 
-                        p: 3,
-                        display: 'flex', 
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        borderBottom: '1px solid rgba(0,0,0,0.08)',
-                        bgcolor: '#f8fafc'
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <InfoIcon sx={{ color: '#1976d2', fontSize: 24 }} />
-                        <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
-                          Detalhes do Link
-                        </Typography>
-                      </Box>
-                      <IconButton
-                        onClick={() => setOpenPopupId(null)}
-                        size="small"
+                                        background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)'
+                                      }
+                                    }}
+                                  >
+                                    <DialogContent sx={{ p: 3 }}>
+                                      <Box sx={{ mb: 3 }}>
+                                        <Typography 
+                                          variant="subtitle2" 
                         sx={{ 
                           color: '#64748b',
-                          '&:hover': { 
-                            color: '#dc2626',
-                            bgcolor: 'rgba(220, 38, 38, 0.08)'
-                          }
-                        }}
-                      >
-                        <CloseIcon sx={{ fontSize: 20 }} />
-                      </IconButton>
-                    </DialogTitle>
-                    <DialogContent sx={{ p: 3 }}>
-                      <Grid container spacing={2.5}>
-                        <Grid item xs={12}>
-                          <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                              Título
-                            </Typography>
-                          </Box>
-                          <Paper 
-                            elevation={0}
-                            sx={{ 
-                              p: 2,
-                              bgcolor: '#f8fafc',
-                              border: '1px solid rgba(0,0,0,0.08)',
-                              borderRadius: 2
-                            }}
-                          >
-                            <Typography sx={{ color: '#1e293b', fontWeight: 500 }}>
-                              {link.title || 'Link sem título'}
-                            </Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                              Slug
-                            </Typography>
-                          </Box>
-                          <Paper 
-                            elevation={0}
-                          sx={{
-                              p: 2,
-                              bgcolor: '#f8fafc',
-                              border: '1px solid rgba(0,0,0,0.08)',
-                              borderRadius: 2
-                            }}
-                          >
-                            <Typography sx={{ color: '#1e293b', fontWeight: 500 }}>
-                              {link.slug}
-                            </Typography>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                                            mb: 1,
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                          }}
+                                        >
                               Link Encurtado
                         </Typography>
-                          </Box>
                           <Paper 
                             elevation={0}
+                                          component={Link}
+                                          href={getShortUrl(link.slug)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                            sx={{ 
+                              p: 2,
+                                            bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                            border: '1px solid',
+                                            borderColor: 'rgba(25, 118, 210, 0.1)',
+                              borderRadius: 2,
+                                            cursor: 'pointer',
+                                            textDecoration: 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                                            gap: 1.5,
+                                  '&:hover': { 
+                                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                  },
+                                  '&:active': {
+                                              transform: 'scale(0.99)'
+                                            }
+                                          }}
+                                        >
+                                          <Typography
+                                sx={{ 
+                                              color: 'primary.main',
+                                              fontSize: '0.875rem',
+                                              fontWeight: 500,
+                                              wordBreak: 'break-all',
+                                              flex: 1
+                                            }}
+                                          >
+                                            {getShortUrl(link.slug)}
+                            </Typography>
+                                          <LaunchIcon sx={{ 
+                                            fontSize: 16, 
+                                            color: 'primary.main',
+                                            opacity: 0.7
+                                          }} />
+                                        </Paper>
+                          </Box>
+
+                                      <Box>
+                                        <Typography 
+                                          variant="subtitle2" 
+                                          sx={{ 
+                                            color: '#64748b',
+                                            mb: 1,
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                          }}
+                                        >
+                                          URL Original
+                                        </Typography>
+                          <Paper 
+                            elevation={0}
+                                          component={Link}
+                                          href={link.destination_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
                             sx={{ 
                               p: 2,
                               bgcolor: '#f8fafc',
-                              border: '1px solid rgba(0,0,0,0.08)',
+                                            border: '1px solid',
+                                            borderColor: 'divider',
                               borderRadius: 2,
+                                            cursor: 'pointer',
+                                            textDecoration: 'none',
                               display: 'flex',
                               alignItems: 'center',
-                              justifyContent: 'space-between'
-                            }}
-                          >
-                            <Typography sx={{ color: '#1e293b', fontWeight: 500, wordBreak: 'break-all', flex: 1 }}>
-                              {shortUrl}
-                            </Typography>
-                            <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
-                              <IconButton 
-                                size="small"
-                                onClick={() => handleCopyLink(shortUrl)}
-                                sx={{ 
-                                  color: copySuccess === shortUrl ? '#22c55e' : '#1976d2',
-                                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  '&:hover': { 
-                                    bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                    transform: 'scale(1.15) rotate(8deg)',
-                                  },
-                                  '&:active': {
-                                    transform: 'scale(0.95) rotate(0deg)',
-                                  }
-                                }}
-                              >
-                                <ContentCopyIcon sx={{ fontSize: 18 }} />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                                href={shortUrl}
-                                target="_blank"
-                                sx={{ 
-                                  color: '#1976d2',
-                                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  '&:hover': { 
-                                    bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                    transform: 'scale(1.15) rotate(8deg)',
-                                  },
-                                  '&:active': {
-                                    transform: 'scale(0.95) rotate(0deg)',
-                                  }
-                                }}
-                              >
-                                <LaunchIcon sx={{ fontSize: 18 }} />
-                              </IconButton>
-                            </Box>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                              URL de Destino
-                            </Typography>
-                          </Box>
-                          <Paper 
-                            elevation={0}
-                            sx={{ 
-                              p: 2,
-                              bgcolor: '#f8fafc',
-                              border: '1px solid rgba(0,0,0,0.08)',
-                              borderRadius: 2,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between'
-                            }}
-                          >
-                            <Typography sx={{ color: '#1e293b', fontWeight: 500, wordBreak: 'break-all', flex: 1 }}>
-                              {link.destination_url}
-                            </Typography>
-                            <IconButton 
-                              size="small"
-                              href={link.destination_url}
-                              target="_blank"
-                              sx={{ 
-                                ml: 2,
-                                color: '#1976d2',
-                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                                            gap: 1.5,
                                 '&:hover': { 
-                                  bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                  transform: 'scale(1.15) rotate(8deg)',
+                                              bgcolor: '#f1f5f9',
                                 },
                                 '&:active': {
-                                  transform: 'scale(0.95) rotate(0deg)',
-                                }
-                              }}
-                            >
-                              <LaunchIcon sx={{ fontSize: 18 }} />
-                          </IconButton>
-                          </Paper>
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                              Informações Adicionais
-                            </Typography>
-                          </Box>
-                          <Paper 
-                            elevation={0}
+                                              transform: 'scale(0.99)'
+                                            }
+                                          }}
+                                        >
+                                          <Typography
                           sx={{ 
-                              p: 2,
-                              bgcolor: '#f8fafc',
-                              border: '1px solid rgba(0,0,0,0.08)',
-                              borderRadius: 2
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <TimeIcon sx={{ color: '#64748b', fontSize: 18 }} />
-                                  <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
-                                    Criado em:
+                                              color: '#64748b',
+                                              fontSize: '0.875rem',
+                                              fontWeight: 500,
+                                              wordBreak: 'break-all',
+                                              flex: 1
+                                            }}
+                                          >
+                                            {link.destination_url}
                                   </Typography>
-                                </Box>
-                                <Typography variant="body2" sx={{ color: '#1e293b', fontWeight: 500 }}>
-                                  {new Date(link.created_at).toLocaleString()}
-                                </Typography>
-                              </Box>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <TimeIcon sx={{ color: '#64748b', fontSize: 18 }} />
-                                  <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
-                                    Última atualização:
-                                  </Typography>
-                                </Box>
-                                <Typography variant="body2" sx={{ color: '#1e293b', fontWeight: 500 }}>
-                                  {new Date(link.updated_at || link.created_at).toLocaleString()}
-                        </Typography>
-                      </Box>
-                    </Box>
+                                          <LaunchIcon sx={{ 
+                                            fontSize: 16, 
+                                            color: '#64748b',
+                                            opacity: 0.7
+                                          }} />
                           </Paper>
-                        </Grid>
-              </Grid>
+                                      </Box>
                     </DialogContent>
-                    <DialogActions 
-                      sx={{ 
-                        p: 3, 
-                        borderTop: '1px solid rgba(0,0,0,0.08)',
-                        bgcolor: '#f8fafc'
-                      }}
-                    >
+                                    <DialogActions sx={{ p: 2, pt: 0 }}>
                       <Button
-                        onClick={() => handleEditClick(link)}
-                        startIcon={<EditIcon />}
+                                        onClick={() => setOpenPopupId(null)}
                         sx={{ 
-                          color: '#1976d2',
+                                          color: '#64748b',
                           textTransform: 'none',
                           fontWeight: 600,
-                          transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-                          position: 'relative',
-                          top: 0,
                           '&:hover': { 
-                            bgcolor: 'rgba(25, 118, 210, 0.08)',
-                            transform: 'translateY(-2px)',
-                          },
-                          '&:active': {
-                            transform: 'translateY(0)',
-                            top: '2px',
-                            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                          }
-                        }}
-                      >
-                        Editar
+                                            bgcolor: '#f1f5f9'
+                                          }
+                                        }}
+                                      >
+                                        Fechar
                       </Button>
-                      <Button
-                        onClick={() => {
-                          handleDeleteClick(link);
-                          setOpenPopupId(null);
-                        }}
-                        startIcon={<DeleteIcon />}
-                        sx={{ 
-                          color: '#dc2626',
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                          '&:hover': { 
-                            bgcolor: 'rgba(220, 38, 38, 0.08)',
-                            transform: 'translateY(-1px)',
-                          },
-                          '&:active': {
-                            transform: 'translateY(1px)',
-                          }
-                        }}
-                      >
-                        Excluir
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </Grid>
-      </Box>
+                                    </DialogActions>
+                                  </Dialog>
+                                </Box>
+                              </Box>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  );
+                })}
+              </Grid>
 
+              {/* Mensagem quando não há links ou resultados de pesquisa */}
+              {filteredLinks.length === 0 && (
+                <Box 
+                  sx={{ 
+                    textAlign: 'center', 
+                    py: 8,
+                    px: 3,
+                    borderRadius: 3,
+                    bgcolor: '#f8fafc',
+                    border: '2px dashed',
+                    borderColor: 'divider'
+                  }}
+                >
+                  <TimeIcon sx={{ fontSize: 48, color: '#64748b', mb: 2 }} />
+                  <Typography variant="h6" sx={{ color: '#1e293b', fontWeight: 600, mb: 1 }}>
+                    {links.length === 0 ? 'Nenhum link criado ainda' : 'Nenhum resultado encontrado'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#64748b', mb: 3 }}>
+                    {links.length === 0 
+                      ? 'Comece criando seu primeiro link encurtado'
+                      : 'Tente pesquisar com outros termos'}
+                  </Typography>
+                  {links.length === 0 && (
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => navigate('/criar-link')}
+                        sx={{ 
+                        px: 3,
+                        py: 1,
+                        borderRadius: '12px',
+                          textTransform: 'none',
+                        fontSize: '0.95rem',
+                          fontWeight: 600,
+                        boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                          '&:hover': { 
+                          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)'
+                          },
+                        transition: 'all 0.2s ease-in-out'
+                        }}
+                      >
+                      Criar Primeiro Link
+                      </Button>
+                )}
+      </Box>
+              )}
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Modal de Edição */}
       <Dialog 
         open={!!editingLink} 
         onClose={handleEditClose}
         maxWidth="sm"
         fullWidth
+          TransitionComponent={Fade}
+          transitionDuration={300}
         PaperProps={{
           sx: {
-            borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.08)'
+              borderRadius: '24px',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
+              background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)'
           }
         }}
       >
-        <DialogTitle 
-          sx={{ 
+          <DialogTitle sx={{ 
             p: 3,
             display: 'flex', 
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '1px solid rgba(0,0,0,0.08)',
-            bgcolor: '#f8fafc'
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <EditIcon sx={{ color: '#1976d2', fontSize: 24 }} />
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1e293b' }}>
+            background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                bgcolor: 'primary.main',
+                p: 1,
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)'
+              }}>
+                <EditIcon sx={{ fontSize: 20, color: '#fff' }} />
+              </Box>
+              <Typography variant="h6" sx={{ 
+                fontWeight: 700,
+                color: '#1e293b',
+                fontSize: '1.125rem',
+                letterSpacing: '-0.02em'
+              }}>
               Editar Link
             </Typography>
           </Box>
           <IconButton
             onClick={handleEditClose}
-            size="small"
             sx={{ 
               color: '#64748b',
               '&:hover': { 
-                color: '#dc2626',
-                bgcolor: 'rgba(220, 38, 38, 0.08)'
-              }
-            }}
-          >
-            <CloseIcon sx={{ fontSize: 20 }} />
+                  color: '#ef4444',
+                  transform: 'rotate(90deg)'
+                },
+                transition: 'all 0.2s ease-in-out'
+              }}
+            >
+              <CloseIcon />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Grid container spacing={2.5}>
-            <Grid item xs={12}>
-              <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+
+          <DialogContent dividers sx={{ p: 3 }}>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ 
+                  color: '#64748b', 
+                  mb: 1, 
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <TitleIcon sx={{ fontSize: 18 }} />
                   Título
                 </Typography>
-              </Box>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Digite o título do link"
-                value={editForm.title}
-                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                variant="outlined"
-                sx={{ 
-                  '& .MuiOutlinedInput-root': { 
-                    borderRadius: 2,
-                    bgcolor: '#f8fafc',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    '&:hover': {
-                      borderColor: '#1976d2',
-                      bgcolor: '#fff'
-                    },
-                    '&.Mui-focused': {
-                      borderColor: '#1976d2',
-                      bgcolor: '#fff',
-                      boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.08)'
+                <TextField
+                  fullWidth
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  placeholder="Digite o título do link"
+                  size="small"
+                  InputProps={{
+                    sx: {
+                      height: '44px',
                     }
-                  },
-                  '& .MuiOutlinedInput-input': {
-                    color: '#1e293b',
-                    fontSize: '0.9rem',
-                    padding: '12px 16px',
-                    '&::placeholder': {
-                      color: '#64748b',
-                      opacity: 0.8
+                  }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 2,
+                      bgcolor: '#f8fafc',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        bgcolor: '#fff',
+                        boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.1)'
+                      },
+                      '&.Mui-focused': {
+                        borderColor: '#1976d2',
+                        bgcolor: '#fff',
+                        boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
+                      },
+                      '& fieldset': {
+                        borderColor: 'transparent'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'transparent'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'transparent'
+                      }
                     }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ 
+                  color: '#64748b', 
+                  mb: 1, 
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <LinkIcon sx={{ fontSize: 18 }} />
                   Slug
                 </Typography>
-              </Box>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Digite o slug do link"
-                value={editForm.slug}
-                onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
-                required
-                variant="outlined"
-                InputProps={{
-                  startAdornment: (
-                    <Typography sx={{ color: '#64748b', fontSize: '0.9rem', mr: 0.5 }}>
-                      /
-                    </Typography>
-                  ),
-                }}
-                sx={{ 
-                  '& .MuiOutlinedInput-root': { 
-                    borderRadius: 2,
-                    bgcolor: '#f8fafc',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    '&:hover': {
-                      borderColor: '#1976d2',
-                      bgcolor: '#fff'
+                <TextField
+                  fullWidth
+                  value={editForm.slug}
+                  onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+                  placeholder="Digite o slug do link"
+                  size="small"
+                  InputProps={{
+                    sx: {
+                      height: '44px',
                     },
-                    '&.Mui-focused': {
-                      borderColor: '#1976d2',
-                      bgcolor: '#fff',
-                      boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.08)'
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Typography sx={{ 
+                          color: '#64748b', 
+                          fontSize: '0.9rem',
+                          fontWeight: 500,
+                          mr: 0.5 
+                        }}>
+                          /
+                        </Typography>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 2,
+                      bgcolor: '#f8fafc',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        bgcolor: '#fff',
+                        boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.1)'
+                      },
+                      '&.Mui-focused': {
+                        borderColor: '#1976d2',
+                        bgcolor: '#fff',
+                        boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
+                      },
+                      '& fieldset': {
+                        borderColor: 'transparent'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'transparent'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'transparent'
+                      }
                     }
-                  },
-                  '& .MuiOutlinedInput-input': {
-                    color: '#1e293b',
-                    fontSize: '0.9rem',
-                    padding: '12px 16px',
-                    '&::placeholder': {
-                      color: '#64748b',
-                      opacity: 0.8
-                    }
-                  }
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ 
+                  color: '#64748b', 
+                  mb: 1, 
+                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <InsertLinkIcon sx={{ fontSize: 18 }} />
                   URL de Destino
                 </Typography>
-              </Box>
-              <TextField
-                fullWidth
-                size="small"
-                placeholder="Cole a URL de destino aqui"
-                value={editForm.destinationUrl}
-                onChange={(e) => setEditForm({ ...editForm, destinationUrl: e.target.value })}
-                required
-                variant="outlined"
-                sx={{ 
-                  '& .MuiOutlinedInput-root': { 
-                    borderRadius: 2,
-                    bgcolor: '#f8fafc',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    '&:hover': {
-                      borderColor: '#1976d2',
-                      bgcolor: '#fff'
-                    },
-                    '&.Mui-focused': {
-                      borderColor: '#1976d2',
-                      bgcolor: '#fff',
-                      boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.08)'
+                <TextField
+                  fullWidth
+                  value={editForm.destinationUrl}
+                  onChange={(e) => setEditForm({ ...editForm, destinationUrl: e.target.value })}
+                  placeholder="Cole a URL de destino aqui"
+                  size="small"
+                  InputProps={{
+                    sx: {
+                      height: '44px',
                     }
-                  },
-                  '& .MuiOutlinedInput-input': {
-                    color: '#1e293b',
-                    fontSize: '0.9rem',
-                    padding: '12px 16px',
-                    '&::placeholder': {
-                      color: '#64748b',
-                      opacity: 0.8
+                  }}
+                  sx={{ 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 2,
+                      bgcolor: '#f8fafc',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        borderColor: '#1976d2',
+                        bgcolor: '#fff',
+                        boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.1)'
+                      },
+                      '&.Mui-focused': {
+                        borderColor: '#1976d2',
+                        bgcolor: '#fff',
+                        boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
+                      },
+                      '& fieldset': {
+                        borderColor: 'transparent'
+                      },
+                      '&:hover fieldset': {
+                        borderColor: 'transparent'
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: 'transparent'
+                      }
                     }
-                  }
-                }}
-              />
+                  }}
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions 
-          sx={{ 
+          </DialogContent>
+
+          <DialogActions sx={{ 
             p: 3, 
-            borderTop: '1px solid rgba(0,0,0,0.08)',
-            bgcolor: '#f8fafc',
-            gap: 1
-          }}
-        >
+            background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)'
+          }}>
           <Button 
             onClick={handleEditClose}
             sx={{ 
               color: '#64748b',
               textTransform: 'none',
               fontWeight: 600,
-              px: 3,
-              transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              top: 0,
               '&:hover': { 
-                bgcolor: 'rgba(100, 116, 139, 0.08)',
-                transform: 'translateY(-2px)',
-              },
-              '&:active': {
-                transform: 'translateY(0)',
-                top: '2px',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
+                  bgcolor: 'rgba(100, 116, 139, 0.08)'
               }
             }}
           >
@@ -928,70 +1175,46 @@ function HomePage() {
             onClick={handleEditSave}
             variant="contained"
             sx={{ 
-              bgcolor: '#1976d2',
+                px: 3,
+                py: 1,
+                borderRadius: '10px',
               textTransform: 'none',
               fontWeight: 600,
-              px: 3,
-              boxShadow: 'none',
-              transition: 'all 0.15s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              top: 0,
+                boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
+                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
               '&:hover': {
-                boxShadow: '0 4px 8px rgba(25, 118, 210, 0.16)',
-                bgcolor: '#1565c0',
-                transform: 'translateY(-2px)',
-              },
-              '&:active': {
-                transform: 'translateY(0)',
-                top: '2px',
-                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-              }
-            }}
-          >
-            Salvar
+                  background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)'
+                }
+              }}
+            >
+              Salvar Alterações
           </Button>
         </DialogActions>
       </Dialog>
 
+        {/* Notificações */}
       <Snackbar
         open={notification.open}
-        autoHideDuration={3000}
+          autoHideDuration={4000}
         onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        sx={{
-          mt: 8,
-          mr: 3
-        }}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          TransitionComponent={Fade}
       >
         <Alert 
           onClose={handleCloseNotification} 
           severity={notification.type}
           variant="filled"
           sx={{ 
-            minWidth: '260px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            bgcolor: notification.type === 'success' ? '#1976d2' : '#dc2626',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             '& .MuiAlert-icon': {
-              fontSize: 20,
-              color: '#fff'
+                fontSize: '24px'
             },
             '& .MuiAlert-message': {
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              py: 0.25,
-              color: '#fff'
-            },
-            '& .MuiAlert-action': {
-              pt: 0,
-              pr: 1,
-              '& .MuiIconButton-root': {
-                color: '#fff',
-                opacity: 0.8,
-                '&:hover': {
-                  opacity: 1,
-                  bgcolor: 'rgba(255, 255, 255, 0.08)'
-                }
-              }
+                fontSize: '0.95rem',
+                fontWeight: 500
             }
           }}
         >
@@ -999,6 +1222,7 @@ function HomePage() {
         </Alert>
       </Snackbar>
     </Container>
+    </Box>
   );
 }
 
