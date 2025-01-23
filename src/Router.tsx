@@ -29,9 +29,9 @@ export function Router() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<Layout />}>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/criar-link" element={<CreateLinkPage />} />
-          <Route path="/links" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/usuarios" element={<UsersManagementPage />} />
         </Route>

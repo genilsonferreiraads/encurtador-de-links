@@ -55,7 +55,12 @@ create table links (
   slug text unique not null,
   destination_url text not null,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  advanced_type text CHECK (advanced_type IN ('expirable', 'selfDestruct', 'password')),
+  expires_at timestamp with time zone,
+  is_self_destruct boolean DEFAULT false,
+  password text,
+  is_destroyed boolean DEFAULT false
 );
 
 alter table links enable row level security;

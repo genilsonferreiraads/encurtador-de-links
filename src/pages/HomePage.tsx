@@ -26,6 +26,10 @@ import {
   Avatar,
   InputBase,
   InputAdornment,
+  Stack,
+  FormControlLabel,
+  Radio,
+  Collapse,
 } from '@mui/material';
 import {
   ContentCopy as ContentCopyIcon,
@@ -42,19 +46,46 @@ import {
   Clear as ClearIcon,
   Title as TitleIcon,
   InsertLink as InsertLinkIcon,
+  Download as DownloadIcon,
+  QrCode as QrCodeIcon,
+  Share as ShareIcon,
+  AccessTime as AccessTimeIcon,
+  Lock as LockIcon,
+  FlashOn as FlashOnIcon,
+  Timer as TimerIcon,
+  Visibility as VisibilityIcon,
+  Error as ErrorIcon,
 } from '@mui/icons-material';
-import { supabase } from '../services/supabase';
-import { getCurrentUser } from '../services/supabase';
+import { supabase, getCurrentUser } from '../services/supabase';
+import { QRCodeSVG } from 'qrcode.react';
+
+interface Link {
+  id: number;
+  title: string;
+  slug: string;
+  destination_url: string;
+  created_at: string;
+  clicks: number;
+  advanced_type: 'expirable' | 'selfDestruct' | 'password' | null;
+  expires_at: string | null;
+  is_destroyed: boolean;
+}
+
+interface EditForm {
+  title: string;
+  slug: string;
+  destinationUrl: string;
+}
 
 function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [links, setLinks] = useState<any[]>([]);
+  const [links, setLinks] = useState<Link[]>([]);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [editingLink, setEditingLink] = useState<any>(null);
-  const [editForm, setEditForm] = useState({ title: '', slug: '', destinationUrl: '' });
+  const [editForm, setEditForm] = useState<EditForm>({ title: '', slug: '', destinationUrl: '' });
   const [openPopupId, setOpenPopupId] = useState<number | null>(null);
   const [notification, setNotification] = useState<{
     open: boolean;
@@ -66,6 +97,8 @@ function HomePage() {
     type: 'success'
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [openQRCodeId, setOpenQRCodeId] = useState<number | null>(null);
+  const [highlightedLinkId, setHighlightedLinkId] = useState<number | null>(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -91,21 +124,34 @@ function HomePage() {
   useEffect(() => {
     if (location.state?.successMessage) {
       showNotification(location.state.successMessage, 'success');
-      window.history.replaceState({}, document.title);
+      navigate(location.pathname, { replace: true });
+    }
+
+    if (location.state?.newLinkId) {
+      setHighlightedLinkId(location.state.newLinkId);
+      setTimeout(() => setHighlightedLinkId(null), 3000);
     }
   }, [location]);
 
   const loadLinks = async () => {
     try {
-      const { data, error } = await supabase
+      const user = await getCurrentUser();
+      if (!user) {
+        throw new Error('Usuário não autenticado');
+      }
+
+      const { data: linksData, error } = await supabase
         .from('links')
-        .select('id, title, slug, destination_url, created_at, clicks')
+        .select('id, title, slug, destination_url, created_at, clicks, advanced_type, expires_at, is_destroyed')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setLinks(data || []);
+      
+      setLinks(linksData || []);
     } catch (error) {
       console.error('Erro ao carregar links:', error);
+      showNotification('Erro ao carregar links', 'error');
     }
   };
 
@@ -121,6 +167,15 @@ function HomePage() {
 
   const getShortUrl = (slug: string) => {
     return `${window.location.origin}/${slug}`;
+  };
+
+  const cleanSlug = (value: string) => {
+    // Remove espaços, pontos e caracteres especiais
+    // Mantém apenas letras, números, hífen e underscore
+    return value.toLowerCase()
+      .replace(/[^a-z0-9-_]/g, '')
+      .replace(/\.+/g, '')
+      .replace(/\s+/g, '-');
   };
 
   const handleEditClick = (link: any) => {
@@ -202,6 +257,24 @@ function HomePage() {
       link.destination_url.toLowerCase().includes(searchTermLower)
     );
   });
+
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date();
+    const expiration = new Date(expiresAt);
+    const diff = expiration.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Expirado';
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (days > 0) return `${days} ${days === 1 ? 'dia' : 'dias'} para expirar`;
+    if (hours > 0) return `${hours} ${hours === 1 ? 'hora' : 'horas'} para expirar`;
+    if (minutes > 0) return `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'} para expirar`;
+    
+    return 'Menos de 1 minuto para expirar';
+  };
 
   if (loading) {
     return (
@@ -288,7 +361,7 @@ function HomePage() {
                     letterSpacing: '-0.02em',
                     mb: 0.5
                   }}>
-                    Links Criados
+              Links Criados
                   </Typography>
                   <Typography variant="body2" sx={{ 
                     color: '#64748b',
@@ -296,8 +369,8 @@ function HomePage() {
                     fontSize: { xs: '0.875rem', sm: '1rem' }
                   }}>
                     Gerencie todos os seus links encurtados
-          </Typography>
-                </Box>
+            </Typography>
+          </Box>
         </Box>
         
               <Box sx={{ 
@@ -325,21 +398,21 @@ function HomePage() {
                     <RefreshIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
                   </IconButton>
                 </Tooltip>
-                <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
                   onClick={() => navigate('/criar-link')}
-                              sx={{ 
+            sx={{ 
                     height: { xs: 40, sm: 42 },
                     px: { xs: 2, sm: 3 },
                     flex: { xs: 1, sm: 'none' },
                     borderRadius: '12px',
-                    textTransform: 'none',
+              textTransform: 'none',
                     fontSize: { xs: '0.875rem', sm: '0.95rem' },
                                 fontWeight: 600,
                     boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)',
                     background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                    '&:hover': {
+              '&:hover': {
                       background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
                       transform: 'translateY(-2px)',
                       boxShadow: '0 4px 16px rgba(25, 118, 210, 0.3)'
@@ -348,10 +421,10 @@ function HomePage() {
                   }}
                 >
                   Novo Link
-                </Button>
+          </Button>
               </Box>
             </Box>
-          </Box>
+        </Box>
 
           {/* Lista de Links */}
           <Box sx={{ 
@@ -442,274 +515,528 @@ function HomePage() {
                       <ClearIcon sx={{ fontSize: 18 }} />
                                   </IconButton>
                   )}
-                              </Box>
+        </Box>
               </Paper>
-
+        
               <Grid container spacing={2}>
                 {filteredLinks.map((link) => {
-                  const shortUrl = getShortUrl(link.slug);
-                  
-                  return (
+            const shortUrl = getShortUrl(link.slug);
+            
+            return (
                     <Grid item xs={12} key={link.id}>
-                      <Card 
-                        elevation={0}
-                                sx={{ 
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: { xs: 2, sm: 3 },
-                          transition: 'all 0.3s ease-in-out',
-                            '&:hover': {
-                            borderColor: 'primary.main',
-                            transform: { xs: 'none', sm: 'translateY(-2px)' },
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
-                                  },
-                                  '&:active': {
-                            transform: { xs: 'scale(0.99)', sm: 'translateY(-2px)' },
-                            bgcolor: 'rgba(0,0,0,0.01)'
-                          }
-                        }}
-                      >
-                        <CardContent sx={{ 
-                          p: { xs: 1.5, sm: 3 },
-                          '&:last-child': { pb: { xs: 1.5, sm: 3 } }
-                        }}>
-                          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
-                            <Grid item xs={12}>
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, sm: 1.5 } }}>
-                                {/* Título e Data */}
-                                <Box sx={{ 
-                                  display: 'flex', 
-                                  flexDirection: 'column',
-                                  gap: { xs: 1, sm: 0.5 }
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3,
+                    borderRadius: 3,
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    transition: 'all 0.3s ease-in-out',
+                    animation: link.id === highlightedLinkId ? 'highlight 3s ease-in-out' : 'none',
+                    '@keyframes highlight': {
+                      '0%': {
+                        transform: 'scale(1)',
+                        boxShadow: '0 0 0 0 rgba(25, 118, 210, 0.4)',
+                      },
+                      '50%': {
+                        transform: 'scale(1.02)',
+                        boxShadow: '0 0 0 10px rgba(25, 118, 210, 0)',
+                      },
+                      '100%': {
+                        transform: 'scale(1)',
+                        boxShadow: '0 0 0 0 rgba(25, 118, 210, 0)',
+                      }
+                    }
+                  }}
+                >
+                  <CardContent sx={{ 
+                    p: { xs: 1, sm: 3 },
+                    '&:last-child': { pb: { xs: 1, sm: 3 } }
+                  }}>
+                    <Grid container spacing={{ xs: 1, sm: 2 }}>
+                      <Grid item xs={12}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.25, sm: 0.5 } }}>
+                          {/* Título e Data */}
+                          <Box sx={{ 
+                            display: 'flex', 
+                            flexDirection: 'column',
+                            gap: { xs: 0.25, sm: 0.5 }
+                          }}>
+                            <Box sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 1.5,
+                              mb: { xs: 0.25, sm: 1 },
+                              flexWrap: 'wrap'
+                            }}>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                alignItems: 'center',
+                                gap: 2,
+                                color: '#64748b',
+                                fontSize: '0.875rem'
+                              }}>
+                                <Typography variant="h6" sx={{ 
+                                  fontSize: '1rem',
+                                  fontWeight: 600,
+                                  color: '#1e293b'
                                 }}>
+                                  {link.title}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+
+                          {/* Links e Ações */}
+                          <Box sx={{ 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: { xs: 1, sm: 1 }
+                          }}>
+                            {/* Mobile View */}
+                            <Box sx={{ 
+                              display: { xs: 'flex', sm: 'none' },
+                              flexDirection: 'column',
+                              gap: 1
+                            }}>
+                              <Button
+                                onClick={() => setOpenPopupId(link.id)}
+                                sx={{ 
+                                  width: '100%',
+                                  height: 42,
+                                  bgcolor: 'primary.main',
+                                  color: '#fff',
+                                  borderRadius: 2,
+                                  px: 2,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 1,
+                                  textTransform: 'none',
+                                  fontWeight: 600,
+                                  fontSize: '0.875rem',
+                                  background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                  boxShadow: '0 2px 8px rgba(25, 118, 210, 0.15)',
+                                  '&:hover': {
+                                    background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                    transform: 'translateY(-1px)',
+                                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)'
+                                  }
+                                }}
+                              >
+                                <LinkIcon sx={{ fontSize: 18 }} />
+                                Ver Links
+                              </Button>
+
+                              <Box sx={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                px: 0.5
+                              }}>
+                                {/* Contador de Cliques */}
+                                <Tooltip title={`${link.clicks || 0} ${link.clicks === 1 ? 'clique' : 'cliques'}`}>
+                                  <Box sx={{ 
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: '50%',
+                                    bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(25, 118, 210, 0.1)',
+                                    position: 'relative',
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                      transform: 'translateY(-2px)'
+                                    }
+                                  }}>
+                                    <Typography sx={{ 
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600,
+                                      color: 'primary.main'
+                                    }}>
+                                      {link.clicks || 0}
+                                    </Typography>
+                                  </Box>
+                                </Tooltip>
+
+                                {/* Tempo para Expirar */}
+                                {link.advanced_type === 'expirable' && link.expires_at && (
+                                  <Tooltip title={getTimeRemaining(link.expires_at)}>
+                                    <Box sx={{ 
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: '50%',
+                                      bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: 'rgba(25, 118, 210, 0.1)',
+                                      transition: 'all 0.2s ease-in-out',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                        transform: 'translateY(-2px)'
+                                      }
+                                    }}>
+                                      <AccessTimeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                    </Box>
+                                  </Tooltip>
+                                )}
+
+                                {/* Link Autodestrutivo */}
+                                {link.advanced_type === 'selfDestruct' && (
+                                  <Tooltip title={link.is_destroyed ? 'Destruído' : 'Autodestrutivo'}>
+                                    <Box sx={{ 
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: '50%',
+                                      bgcolor: link.is_destroyed ? 'rgba(239, 68, 68, 0.04)' : 'rgba(25, 118, 210, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: link.is_destroyed ? 'rgba(239, 68, 68, 0.1)' : 'rgba(25, 118, 210, 0.1)',
+                                      transition: 'all 0.2s ease-in-out',
+                                      '&:hover': {
+                                        bgcolor: link.is_destroyed ? 'rgba(239, 68, 68, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+                                        transform: 'translateY(-2px)'
+                                      }
+                                    }}>
+                                      <FlashOnIcon sx={{ 
+                                        fontSize: 16, 
+                                        color: link.is_destroyed ? '#ef4444' : 'primary.main'
+                                      }} />
+                                    </Box>
+                                  </Tooltip>
+                                )}
+
+                                {/* Link Protegido */}
+                                {link.advanced_type === 'password' && (
+                                  <Tooltip title="Protegido por senha">
+                                    <Box sx={{ 
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      width: 32,
+                                      height: 32,
+                                      borderRadius: '50%',
+                                      bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: 'rgba(25, 118, 210, 0.1)',
+                                      transition: 'all 0.2s ease-in-out',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                        transform: 'translateY(-2px)'
+                                      }
+                                    }}>
+                                      <LockIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                    </Box>
+                                  </Tooltip>
+                                )}
+
+                                {/* Data de Criação */}
+                                <Box sx={{ 
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  p: 1,
+                                  pl: 1.5,
+                                  borderRadius: 2,
+                                  bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                  border: '1px solid',
+                                  borderColor: 'rgba(25, 118, 210, 0.1)',
+                                  transition: 'all 0.2s ease-in-out',
+                                  '&:hover': {
+                                    bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                    transform: 'translateY(-2px)'
+                                  }
+                                }}>
+                                  <TimeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                  <Typography sx={{ 
+                                    fontSize: '0.75rem',
+                                    fontWeight: 500,
+                                    color: 'primary.main'
+                                  }}>
+                                    {new Date(link.created_at).toLocaleDateString('pt-BR', {
+                                      day: '2-digit',
+                                      month: 'short'
+                                    })}
+                                  </Typography>
+                                </Box>
+                              </Box>
+
+                              <Box sx={{ 
+                                display: 'flex', 
+                                gap: 1,
+                                mt: 0
+                              }}>
+                                <IconButton
+                                  onClick={() => handleEditClick(link)}
+                                  size="small"
+                                  sx={{
+                                    flex: 1,
+                                    height: 42,
+                                    color: '#1976d2',
+                                    bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(25, 118, 210, 0.1)',
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      bgcolor: 'rgba(25, 118, 210, 0.08)'
+                                    }
+                                  }}
+                                >
+                                  <EditIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+
+                                <IconButton
+                                  onClick={() => handleDeleteClick(link)}
+                                  size="small"
+                                  sx={{
+                                    flex: 1,
+                                    height: 42,
+                                    color: '#dc2626',
+                                    bgcolor: 'rgba(220, 38, 38, 0.04)',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(220, 38, 38, 0.1)',
+                                    borderRadius: 2,
+                                    '&:hover': { 
+                                      bgcolor: 'rgba(220, 38, 38, 0.08)'
+                                    }
+                                  }}
+                                >
+                                  <DeleteIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+                              </Box>
+                            </Box>
+
+                            {/* Desktop View */}
+                            <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 2, alignItems: 'flex-start' }}>
+                              <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                <Box sx={{ display: 'flex', gap: 1 }}>
+                                  <Button
+                                    onClick={() => setOpenPopupId(link.id)}
+                                    variant="contained"
+                                    startIcon={<LinkIcon sx={{ fontSize: 18 }} />}
+                                    sx={{ 
+                                      flex: 1,
+                                      height: 42,
+                                      borderRadius: 2,
+                                      textTransform: 'none',
+                                      fontWeight: 600,
+                                      background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                      boxShadow: '0 2px 8px rgba(25, 118, 210, 0.15)',
+                                      '&:hover': {
+                                        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                        transform: 'translateY(-1px)',
+                                        boxShadow: '0 4px 12px rgba(25, 118, 210, 0.2)'
+                                      }
+                                    }}
+                                  >
+                                    Ver Links
+                                  </Button>
+
+                                  <IconButton
+                                    onClick={() => handleEditClick(link)}
+                                    size="small"
+                                    sx={{ 
+                                      width: 42,
+                                      height: 42,
+                                      color: '#1976d2',
+                                      bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: 'rgba(25, 118, 210, 0.1)',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                        borderColor: 'rgba(25, 118, 210, 0.2)'
+                                      }
+                                    }}
+                                  >
+                                    <EditIcon sx={{ fontSize: 18 }} />
+                                  </IconButton>
+
+                                  <IconButton
+                                    onClick={() => handleDeleteClick(link)}
+                                    size="small"
+                                    sx={{ 
+                                      width: 42,
+                                      height: 42,
+                                      color: '#dc2626',
+                                      bgcolor: 'rgba(220, 38, 38, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: 'rgba(220, 38, 38, 0.1)',
+                                      '&:hover': { 
+                                        bgcolor: 'rgba(220, 38, 38, 0.08)',
+                                        borderColor: 'rgba(220, 38, 38, 0.2)'
+                                      }
+                                    }}
+                                  >
+                                    <DeleteIcon sx={{ fontSize: 18 }} />
+                                  </IconButton>
+                                </Box>
+
+                                <Box sx={{ 
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: 2,
+                                  mt: 1.5
+                                }}>
+                                  {/* Contador de Cliques */}
                                   <Box sx={{ 
                                     display: 'flex',
                                     alignItems: 'center',
                                     gap: 1,
-                                    flex: 1,
-                                    minWidth: 0
+                                    p: 1,
+                                    pl: 1.5,
+                                    borderRadius: 2,
+                                    bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(25, 118, 210, 0.1)',
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                      transform: 'translateY(-2px)'
+                                    }
                                   }}>
-                                    <Box
-                            sx={{ 
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        minWidth: { xs: 18, sm: 24 },
-                                        height: { xs: 18, sm: 24 },
-                                        borderRadius: '50%',
-                                        bgcolor: '#1976d2',
-                                        color: '#fff',
-                                        fontSize: { xs: '0.6875rem', sm: '0.8125rem' },
-                                        fontWeight: 600,
-                                        flexShrink: 0,
-                                        boxShadow: '0 2px 8px rgba(25, 118, 210, 0.25)'
-                                      }}
-                                    >
-                                      {link.clicks || 0}
+                                    <VisibilityIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                    <Typography sx={{ 
+                                      fontSize: '0.875rem',
+                                      fontWeight: 500,
+                                      color: 'primary.main'
+                                    }}>
+                                      {link.clicks || 0} {link.clicks === 1 ? 'clique' : 'cliques'}
+                                    </Typography>
+                                  </Box>
+
+                                  {/* Tempo para Expirar */}
+                                  {link.advanced_type === 'expirable' && link.expires_at && (
+                                    <Box sx={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center',
+                                      gap: 1,
+                                      p: 1,
+                                      pl: 1.5,
+                                      borderRadius: 2,
+                                      bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: 'rgba(25, 118, 210, 0.1)',
+                                      transition: 'all 0.2s ease-in-out',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                        transform: 'translateY(-2px)'
+                                      }
+                                    }}>
+                                      <AccessTimeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                      <Typography sx={{ 
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: 'primary.main'
+                                      }}>
+                                        {getTimeRemaining(link.expires_at)}
+                                      </Typography>
                                     </Box>
-                                    <Typography 
-                                      variant="h6" 
-                                      sx={{ 
-                                        fontWeight: 600,
-                                        color: '#1e293b',
-                                        fontSize: { xs: '0.9375rem', sm: '1.0625rem' },
-                                        lineHeight: 1.4,
-                                        flex: 1,
-                                        minWidth: 0,
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        letterSpacing: '-0.01em',
-                                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                                        textShadow: '0 1px 1px rgba(255, 255, 255, 0.8)',
-                                  '&:hover': { 
-                                          color: '#0f172a'
-                                        },
-                                        transition: 'color 0.2s ease-in-out'
-                                      }}
-                                    >
-                                      {link.title || 'Link sem título'}
+                                  )}
+
+                                  {/* Link Autodestrutivo */}
+                                  {link.advanced_type === 'selfDestruct' && (
+                                    <Box sx={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center',
+                                      gap: 1,
+                                      p: 1,
+                                      pl: 1.5,
+                                      borderRadius: 2,
+                                      bgcolor: link.is_destroyed ? 'rgba(239, 68, 68, 0.04)' : 'rgba(25, 118, 210, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: link.is_destroyed ? 'rgba(239, 68, 68, 0.1)' : 'rgba(25, 118, 210, 0.1)',
+                                      transition: 'all 0.2s ease-in-out',
+                                      '&:hover': {
+                                        bgcolor: link.is_destroyed ? 'rgba(239, 68, 68, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+                                        transform: 'translateY(-2px)'
+                                      }
+                                    }}>
+                                      <FlashOnIcon sx={{ 
+                                        fontSize: 16, 
+                                        color: link.is_destroyed ? '#ef4444' : 'primary.main'
+                                      }} />
+                                      <Typography sx={{ 
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: link.is_destroyed ? '#ef4444' : 'primary.main'
+                                      }}>
+                                        {link.is_destroyed ? 'Destruído' : 'Autodestrutivo'}
+                                      </Typography>
+                                    </Box>
+                                  )}
+
+                                  {/* Link Protegido */}
+                                  {link.advanced_type === 'password' && (
+                                    <Box sx={{ 
+                                      display: 'flex', 
+                                      alignItems: 'center',
+                                      gap: 1,
+                                      p: 1,
+                                      pl: 1.5,
+                                      borderRadius: 2,
+                                      bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                      border: '1px solid',
+                                      borderColor: 'rgba(25, 118, 210, 0.1)',
+                                      transition: 'all 0.2s ease-in-out',
+                                      '&:hover': {
+                                        bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                        transform: 'translateY(-2px)'
+                                      }
+                                    }}>
+                                      <LockIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                      <Typography sx={{ 
+                                        fontSize: '0.875rem',
+                                        fontWeight: 500,
+                                        color: 'primary.main'
+                                      }}>
+                                        Protegido por senha
+                                      </Typography>
+                                    </Box>
+                                  )}
+
+                                  {/* Data de Criação */}
+                                  <Box sx={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center',
+                                    gap: 1,
+                                    p: 1,
+                                    pl: 1.5,
+                                    borderRadius: 2,
+                                    bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(25, 118, 210, 0.1)',
+                                    transition: 'all 0.2s ease-in-out',
+                                    '&:hover': {
+                                      bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                      transform: 'translateY(-2px)'
+                                    }
+                                  }}>
+                                    <TimeIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                                    <Typography sx={{ 
+                                      fontSize: '0.875rem',
+                                      fontWeight: 500,
+                                      color: 'primary.main'
+                                    }}>
+                                      {new Date(link.created_at).toLocaleDateString('pt-BR', {
+                                        day: '2-digit',
+                                        month: 'short'
+                                      })}
                                     </Typography>
                                   </Box>
                                 </Box>
+                              </Box>
+                            </Box>
 
-                                {/* Links e Ações */}
-                                <Box sx={{ 
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  gap: { xs: 1, sm: 1 }
-                                }}>
-                                  {/* Mobile View */}
-                                  <Box sx={{ 
-                                    display: { xs: 'flex', sm: 'none' },
-                                    gap: 1,
-                                    alignItems: 'center'
-                                  }}>
-                                    <Button
-                                      onClick={() => setOpenPopupId(link.id)}
-                                      sx={{
-                                        flex: 1,
-                                        height: 36,
-                                        bgcolor: 'rgba(25, 118, 210, 0.04)',
-                                        color: 'primary.main',
-                                        border: '1px solid',
-                                        borderColor: 'rgba(25, 118, 210, 0.1)',
-                                        borderRadius: 1.5,
-                                        px: 1.5,
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        gap: 1,
-                                        textTransform: 'none',
-                                        fontWeight: 600,
-                                        fontSize: '0.8125rem',
-                                        '&:hover': {
-                                          bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                        },
-                                        '&:active': {
-                                          transform: 'scale(0.98)'
-                                        }
-                                      }}
-                                    >
-                                      <LinkIcon sx={{ fontSize: 16 }} />
-                                      Ver Links
-                                    </Button>
-
-                                    <IconButton
-                                      onClick={() => handleEditClick(link)}
-                                      size="small"
-                                      sx={{
-                                        width: 36,
-                                        height: 36,
-                                        color: '#1976d2',
-                                        bgcolor: 'rgba(25, 118, 210, 0.04)',
-                                        border: '1px solid',
-                                        borderColor: 'rgba(25, 118, 210, 0.1)',
-                                        '&:hover': {
-                                          bgcolor: 'rgba(25, 118, 210, 0.08)'
-                                        }
-                                      }}
-                                    >
-                                      <EditIcon sx={{ fontSize: 16 }} />
-                                    </IconButton>
-
-                                    <IconButton
-                                      onClick={() => handleDeleteClick(link)}
-                                      size="small"
-                                      sx={{
-                                        width: 36,
-                                        height: 36,
-                                        color: '#dc2626',
-                                        bgcolor: 'rgba(220, 38, 38, 0.04)',
-                                        border: '1px solid',
-                                        borderColor: 'rgba(220, 38, 38, 0.1)',
-                                        '&:hover': {
-                                          bgcolor: 'rgba(220, 38, 38, 0.08)'
-                                        }
-                                      }}
-                                    >
-                                      <DeleteIcon sx={{ fontSize: 16 }} />
-                                    </IconButton>
-                                  </Box>
-
-                                  {/* Desktop View */}
-                                  <Box sx={{ display: { xs: 'none', sm: 'flex' }, gap: 2, alignItems: 'center' }}>
-                                    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                      <Button
-                                        onClick={() => setOpenPopupId(link.id)}
-                                        sx={{
-                                          width: '100%',
-                                          height: 42,
-                                          bgcolor: 'rgba(25, 118, 210, 0.04)',
-                                          color: 'primary.main',
-                                          border: '1px solid',
-                                          borderColor: 'rgba(25, 118, 210, 0.1)',
-                                          borderRadius: 2,
-                                          px: 2,
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          gap: 1,
-                                          textTransform: 'none',
-                                          fontWeight: 600,
-                                          fontSize: '0.875rem',
-                                          '&:hover': {
-                                            bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                            borderColor: 'rgba(25, 118, 210, 0.2)'
-                                  },
-                                  '&:active': {
-                                            transform: 'scale(0.98)'
-                                          }
-                                        }}
-                                      >
-                                        <LinkIcon sx={{ fontSize: 18 }} />
-                                        Ver Links
-                                      </Button>
-
-                                      <Typography 
-                                        sx={{ 
-                                          color: '#64748b',
-                                          fontSize: { xs: '0.6875rem', sm: '0.75rem' },
-                                          fontWeight: 500,
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          gap: 0.5,
-                                          '& .MuiSvgIcon-root': {
-                                            fontSize: { xs: 12, sm: 14 },
-                                            color: '#94a3b8',
-                                            opacity: 0.8
-                                          }
-                                        }}
-                                      >
-                                        <TimeIcon />
-                                        {new Date(link.created_at).toLocaleDateString('pt-BR', {
-                                          day: '2-digit',
-                                          month: 'short'
-                                        })}
-                                      </Typography>
-                                    </Box>
-
-                              <IconButton
-                                onClick={() => handleEditClick(link)}
-                                size="small"
-                                sx={{ 
-                                        width: 42,
-                                        height: 42,
-                                    color: '#1976d2',
-                                        bgcolor: 'rgba(25, 118, 210, 0.04)',
-                                        border: '1px solid',
-                                        borderColor: 'rgba(25, 118, 210, 0.1)',
-                                        '&:hover': {
-                                          bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                          borderColor: 'rgba(25, 118, 210, 0.2)'
-                                  }
-                                }}
-                              >
-                                <EditIcon sx={{ fontSize: 18 }} />
-                              </IconButton>
-
-                              <IconButton
-                                onClick={() => handleDeleteClick(link)}
-                                size="small"
-                                sx={{ 
-                                        width: 42,
-                                        height: 42,
-                                        color: '#dc2626',
-                                        bgcolor: 'rgba(220, 38, 38, 0.04)',
-                                        border: '1px solid',
-                                        borderColor: 'rgba(220, 38, 38, 0.1)',
-                                  '&:hover': { 
-                                          bgcolor: 'rgba(220, 38, 38, 0.08)',
-                                          borderColor: 'rgba(220, 38, 38, 0.2)'
-                                  }
-                                }}
-                              >
-                                <DeleteIcon sx={{ fontSize: 18 }} />
-                          </IconButton>
-                          </Box>
-
-                                  {/* Modal para exibir URLs (agora visível em ambos mobile e desktop) */}
+                            {/* Modal para exibir URLs (agora visível em ambos mobile e desktop) */}
                   <Dialog
                                     open={openPopupId === link.id}
                     onClose={() => setOpenPopupId(null)}
@@ -724,145 +1051,350 @@ function HomePage() {
                                       }
                                     }}
                                   >
-                                    <DialogContent sx={{ p: 3 }}>
-                                      <Box sx={{ mb: 3 }}>
-                                        <Typography 
-                                          variant="subtitle2" 
-                        sx={{ 
-                          color: '#64748b',
-                                            mb: 1,
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.5px'
-                                          }}
-                                        >
-                              Link Encurtado
-                        </Typography>
-                          <Paper 
-                            elevation={0}
-                                          component={Link}
-                                          href={getShortUrl(link.slug)}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                            sx={{ 
-                              p: 2,
-                                            bgcolor: 'rgba(25, 118, 210, 0.04)',
-                                            border: '1px solid',
-                                            borderColor: 'rgba(25, 118, 210, 0.1)',
-                              borderRadius: 2,
-                                            cursor: 'pointer',
-                                            textDecoration: 'none',
-                              display: 'flex',
-                              alignItems: 'center',
-                                            gap: 1.5,
-                                  '&:hover': { 
-                                    bgcolor: 'rgba(25, 118, 210, 0.08)',
-                                  },
-                                  '&:active': {
-                                              transform: 'scale(0.99)'
-                                            }
-                                          }}
-                                        >
-                                          <Typography
-                                sx={{ 
-                                              color: 'primary.main',
-                                              fontSize: '0.875rem',
-                                              fontWeight: 500,
-                                              wordBreak: 'break-all',
-                                              flex: 1
-                                            }}
-                                          >
-                                            {getShortUrl(link.slug)}
-                            </Typography>
-                                          <LaunchIcon sx={{ 
-                                            fontSize: 16, 
-                                            color: 'primary.main',
-                                            opacity: 0.7
-                                          }} />
-                                        </Paper>
-                          </Box>
-
-                                      <Box>
-                                        <Typography 
-                                          variant="subtitle2" 
-                                          sx={{ 
-                                            color: '#64748b',
-                                            mb: 1,
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            textTransform: 'uppercase',
-                                            letterSpacing: '0.5px'
-                                          }}
-                                        >
-                                          URL Original
-                                        </Typography>
-                          <Paper 
-                            elevation={0}
-                                          component={Link}
-                                          href={link.destination_url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                            sx={{ 
-                              p: 2,
-                              bgcolor: '#f8fafc',
-                                            border: '1px solid',
-                                            borderColor: 'divider',
-                              borderRadius: 2,
-                                            cursor: 'pointer',
-                                            textDecoration: 'none',
-                              display: 'flex',
-                              alignItems: 'center',
-                                            gap: 1.5,
-                                '&:hover': { 
-                                              bgcolor: '#f1f5f9',
-                                },
-                                '&:active': {
-                                              transform: 'scale(0.99)'
-                                            }
-                                          }}
-                                        >
-                                          <Typography
-                          sx={{ 
+                                    <DialogContent sx={{ p: 2 }}>
+                                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                        <Box>
+                                          <Typography 
+                                            variant="subtitle2" 
+                                            sx={{ 
                                               color: '#64748b',
-                                              fontSize: '0.875rem',
-                                              fontWeight: 500,
-                                              wordBreak: 'break-all',
-                                              flex: 1
+                                              mb: 1,
+                                              fontSize: '0.75rem',
+                                              fontWeight: 600,
+                                              textTransform: 'uppercase',
+                                              letterSpacing: '0.5px'
                                             }}
                                           >
-                                            {link.destination_url}
-                                  </Typography>
-                                          <LaunchIcon sx={{ 
-                                            fontSize: 16, 
-                                            color: '#64748b',
-                                            opacity: 0.7
-                                          }} />
-                          </Paper>
+                                            Link Encurtado
+                                          </Typography>
+                                          <Paper 
+                                            elevation={0}
+                                            sx={{ 
+                                              p: 2,
+                                              bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                              border: '1px solid',
+                                              borderColor: 'rgba(25, 118, 210, 0.1)',
+                                              borderRadius: 2,
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: 1
+                                            }}
+                                          >
+                                            <Typography
+                                              sx={{ 
+                                                color: 'primary.main',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                wordBreak: 'break-all',
+                                                flex: 1
+                                              }}
+                                            >
+                                              {getShortUrl(link.slug)}
+                                            </Typography>
+                                            <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                              <IconButton
+                                                onClick={() => setOpenQRCodeId(link.id)}
+                                                size="small"
+                                                sx={{ 
+                                                  color: 'primary.main',
+                                                  '&:hover': {
+                                                    bgcolor: 'rgba(25, 118, 210, 0.08)'
+                                                  }
+                                                }}
+                                              >
+                                                <QrCodeIcon sx={{ fontSize: 20 }} />
+                                              </IconButton>
+                                              <IconButton
+                                                component={Link}
+                                                href={getShortUrl(link.slug)}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                size="small"
+                                                sx={{ 
+                                                  color: 'primary.main',
+                                                  '&:hover': {
+                                                    bgcolor: 'rgba(25, 118, 210, 0.08)'
+                                                  }
+                                                }}
+                                              >
+                                                <LaunchIcon sx={{ fontSize: 20 }} />
+                                              </IconButton>
+                                            </Box>
+                                          </Paper>
+                                        </Box>
+
+                                        <Box>
+                                          <Typography 
+                                            variant="subtitle2" 
+                                            sx={{ 
+                                              color: '#64748b',
+                                              mb: 1,
+                                              fontSize: '0.75rem',
+                                              fontWeight: 600,
+                                              textTransform: 'uppercase',
+                                              letterSpacing: '0.5px'
+                                            }}
+                                          >
+                                            Link Original
+                                          </Typography>
+                                          <Paper 
+                                            elevation={0}
+                                            component={Link}
+                                            href={link.destination_url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            sx={{ 
+                                              p: 2,
+                                              bgcolor: '#f8fafc',
+                                              border: '1px solid',
+                                              borderColor: 'divider',
+                                              borderRadius: 2,
+                                              cursor: 'pointer',
+                                              textDecoration: 'none',
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              gap: 1.5,
+                                              '&:hover': { 
+                                                bgcolor: '#f1f5f9',
+                                              },
+                                              '&:active': {
+                                                transform: 'scale(0.99)'
+                                              }
+                                            }}
+                                          >
+                                            <Typography
+                                              sx={{ 
+                                                color: '#64748b',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 500,
+                                                wordBreak: 'break-all',
+                                                flex: 1
+                                              }}
+                                            >
+                                              {link.destination_url}
+                                            </Typography>
+                                            <LaunchIcon sx={{ 
+                                              fontSize: 16, 
+                                              color: '#64748b',
+                                              opacity: 0.7
+                                            }} />
+                                          </Paper>
+                                        </Box>
                                       </Box>
-                    </DialogContent>
+                                    </DialogContent>
                                     <DialogActions sx={{ p: 2, pt: 0 }}>
-                      <Button
+                                      <Button
                                         onClick={() => setOpenPopupId(null)}
-                        sx={{ 
+                                        sx={{ 
                                           color: '#64748b',
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          '&:hover': { 
+                                          textTransform: 'none',
+                                          fontWeight: 600,
+                                          '&:hover': { 
                                             bgcolor: '#f1f5f9'
                                           }
                                         }}
                                       >
                                         Fechar
-                      </Button>
+                                      </Button>
                                     </DialogActions>
                                   </Dialog>
+
+                                    {/* QR Code Dialog */}
+                                    <Dialog
+                                      open={openQRCodeId === link.id}
+                                      onClose={() => setOpenQRCodeId(null)}
+                                      maxWidth="xs"
+                                      TransitionComponent={Zoom}
+                                      sx={{ 
+                                        '& .MuiDialog-paper': { 
+                                          width: { xs: 'calc(100% - 32px)', sm: '360px' },
+                                          m: 2,
+                                          borderRadius: 4,
+                                          background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+                                          overflow: 'visible',
+                                          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
+                                        }
+                                      }}
+                                    >
+                                      <Box sx={{ 
+                                        position: 'relative',
+                                        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                        p: 3,
+                                        borderTopLeftRadius: 'inherit',
+                                        borderTopRightRadius: 'inherit',
+                                        color: '#fff',
+                                        textAlign: 'center'
+                                      }}>
+                                        <IconButton
+                                          onClick={() => setOpenQRCodeId(null)}
+                                          sx={{ 
+                                            position: 'absolute',
+                                            right: -12,
+                                            top: -12,
+                                            bgcolor: '#fff',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                            border: '2px solid',
+                                            borderColor: '#fff',
+                                            width: 32,
+                                            height: 32,
+                                            '&:hover': {
+                                              bgcolor: '#fff',
+                                              transform: 'rotate(90deg)'
+                                            },
+                                            transition: 'transform 0.2s ease-in-out'
+                                          }}
+                                        >
+                                          <CloseIcon sx={{ fontSize: 18, color: '#1976d2' }} />
+                                        </IconButton>
+                                        <QrCodeIcon sx={{ fontSize: 40, mb: 1 }} />
+                                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                          QR Code do Link
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                          Escaneie para acessar
+                                        </Typography>
+                                      </Box>
+
+                                      <DialogContent sx={{ p: 4 }}>
+                                        <Box
+                                          id={`qr-code-${link.id}`}
+                                          sx={{
+                                            width: '100%',
+                                            height: 220,
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            mb: 3,
+                                            p: 3,
+                                            bgcolor: '#fff',
+                                            borderRadius: 3,
+                                            border: '1px solid',
+                                            borderColor: 'divider'
+                                          }}
+                                        >
+                                          <QRCodeSVG
+                                            value={getShortUrl(link.slug)}
+                                            size={180}
+                                            level="H"
+                                            includeMargin={true}
+                                          />
+                                        </Box>
+                                        
+                                        <Stack direction="row" spacing={2}>
+                                          <Button
+                                            fullWidth
+                                            variant="contained"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={() => {
+                                              const svg = document.querySelector('#qr-code-' + link.id + ' svg');
+                                              if (svg) {
+                                                const svgData = new XMLSerializer().serializeToString(svg);
+                                                const canvas = document.createElement('canvas');
+                                                const ctx = canvas.getContext('2d');
+                                                const img = new Image();
+                                                img.onload = () => {
+                                                  canvas.width = img.width;
+                                                  canvas.height = img.height;
+                                                  if (ctx) {
+                                                    ctx.fillStyle = '#fff';
+                                                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                                    ctx.drawImage(img, 0, 0);
+                                                  }
+                                                  const pngFile = canvas.toDataURL('image/png');
+                                                  const downloadLink = document.createElement('a');
+                                                  downloadLink.download = `qrcode-${link.slug}.png`;
+                                                  downloadLink.href = pngFile;
+                                                  downloadLink.click();
+                                                };
+                                                img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                                              }
+                                            }}
+                                            sx={{ 
+                                              py: 1.5,
+                                              borderRadius: 2,
+                                              textTransform: 'none',
+                                              fontWeight: 600,
+                                              boxShadow: 'none',
+                                              background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                              '&:hover': {
+                                                boxShadow: 'none',
+                                                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                                transform: 'translateY(-1px)'
+                                              }
+                                            }}
+                                          >
+                                            Baixar
+                                          </Button>
+                                          <Button
+                                            fullWidth
+                                            variant="outlined"
+                                            startIcon={<ShareIcon />}
+                                            onClick={async () => {
+                                              try {
+                                                const svg = document.querySelector('#qr-code-' + link.id + ' svg');
+                                                if (svg) {
+                                                  const svgData = new XMLSerializer().serializeToString(svg);
+                                                  const canvas = document.createElement('canvas');
+                                                  const ctx = canvas.getContext('2d');
+                                                  const img = new Image();
+                                                  img.onload = async () => {
+                                                    canvas.width = img.width;
+                                                    canvas.height = img.height;
+                                                    if (ctx) {
+                                                      ctx.fillStyle = '#fff';
+                                                      ctx.fillRect(0, 0, canvas.width, canvas.height);
+                                                      ctx.drawImage(img, 0, 0);
+                                                    }
+                                                    canvas.toBlob(async (blob) => {
+                                                      if (blob) {
+                                                        const file = new File([blob], 'qrcode.png', { type: 'image/png' });
+                                                        if (navigator.share) {
+                                                          try {
+                                                            await navigator.share({
+                                                              title: 'QR Code - ' + link.slug,
+                                                              text: 'Escaneie este QR Code para acessar: ' + getShortUrl(link.slug),
+                                                              files: [file]
+                                                            });
+                                                          } catch (err) {
+                                                            console.error('Erro ao compartilhar:', err);
+                                                          }
+                                                        } else {
+                                                          showNotification('Compartilhamento não suportado neste navegador', 'error');
+                                                        }
+                                                      }
+                                                    }, 'image/png');
+                                                  };
+                                                  img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                                                }
+                                              } catch (err) {
+                                                console.error('Erro ao compartilhar:', err);
+                                                showNotification('Erro ao compartilhar QR Code', 'error');
+                                              }
+                                            }}
+                                            sx={{ 
+                                              py: 1.5,
+                                              borderRadius: 2,
+                                              textTransform: 'none',
+                                              fontWeight: 600,
+                                              borderColor: 'rgba(25, 118, 210, 0.5)',
+                                              '&:hover': {
+                                                borderColor: 'primary.main',
+                                                bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                                transform: 'translateY(-1px)'
+                                              }
+                                            }}
+                                          >
+                                            Compartilhar
+                                          </Button>
+                                        </Stack>
+                                      </DialogContent>
+                                    </Dialog>
                                 </Box>
                               </Box>
                             </Grid>
                           </Grid>
                         </CardContent>
-                      </Card>
+                      </Paper>
                     </Grid>
                   );
                 })}
@@ -981,7 +1513,7 @@ function HomePage() {
 
           <DialogContent dividers sx={{ p: 3 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+            <Grid item xs={12}>
                 <Typography variant="subtitle2" sx={{ 
                   color: '#64748b', 
                   mb: 1, 
@@ -993,10 +1525,10 @@ function HomePage() {
                   <TitleIcon sx={{ fontSize: 18 }} />
                   Título
                 </Typography>
-                <TextField
-                  fullWidth
-                  value={editForm.title}
-                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+              <TextField
+                fullWidth
+                value={editForm.title}
+                onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                   placeholder="Digite o título do link"
                   size="small"
                   InputProps={{
@@ -1004,20 +1536,20 @@ function HomePage() {
                       height: '44px',
                     }
                   }}
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 2,
-                      bgcolor: '#f8fafc',
-                      border: '1px solid rgba(0,0,0,0.08)',
+                sx={{ 
+                  '& .MuiOutlinedInput-root': { 
+                    borderRadius: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid rgba(0,0,0,0.08)',
                       transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        borderColor: '#1976d2',
+                    '&:hover': {
+                      borderColor: '#1976d2',
                         bgcolor: '#fff',
                         boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.1)'
-                      },
-                      '&.Mui-focused': {
-                        borderColor: '#1976d2',
-                        bgcolor: '#fff',
+                    },
+                    '&.Mui-focused': {
+                      borderColor: '#1976d2',
+                      bgcolor: '#fff',
                         boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
                       },
                       '& fieldset': {
@@ -1028,13 +1560,13 @@ function HomePage() {
                       },
                       '&.Mui-focused fieldset': {
                         borderColor: 'transparent'
-                      }
                     }
-                  }}
-                />
-              </Grid>
+                  }
+                }}
+              />
+            </Grid>
 
-              <Grid item xs={12}>
+            <Grid item xs={12}>
                 <Typography variant="subtitle2" sx={{ 
                   color: '#64748b', 
                   mb: 1, 
@@ -1046,17 +1578,18 @@ function HomePage() {
                   <LinkIcon sx={{ fontSize: 18 }} />
                   Slug
                 </Typography>
-                <TextField
-                  fullWidth
-                  value={editForm.slug}
-                  onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+              <TextField
+                fullWidth
+                value={editForm.slug}
+                onChange={(e) => setEditForm({ ...editForm, slug: cleanSlug(e.target.value) })}
                   placeholder="Digite o slug do link"
                   size="small"
+                  helperText="Use apenas letras, números, hífen (-) e underscore (_)"
                   InputProps={{
                     sx: {
                       height: '44px',
                     },
-                    startAdornment: (
+                  startAdornment: (
                       <InputAdornment position="start">
                         <Typography sx={{ 
                           color: '#64748b', 
@@ -1064,25 +1597,25 @@ function HomePage() {
                           fontWeight: 500,
                           mr: 0.5 
                         }}>
-                          /
-                        </Typography>
+                      /
+                    </Typography>
                       </InputAdornment>
-                    ),
-                  }}
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 2,
-                      bgcolor: '#f8fafc',
-                      border: '1px solid rgba(0,0,0,0.08)',
+                  ),
+                }}
+                sx={{ 
+                  '& .MuiOutlinedInput-root': { 
+                    borderRadius: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid rgba(0,0,0,0.08)',
                       transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        borderColor: '#1976d2',
+                    '&:hover': {
+                      borderColor: '#1976d2',
                         bgcolor: '#fff',
                         boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.1)'
-                      },
-                      '&.Mui-focused': {
-                        borderColor: '#1976d2',
-                        bgcolor: '#fff',
+                    },
+                    '&.Mui-focused': {
+                      borderColor: '#1976d2',
+                      bgcolor: '#fff',
                         boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
                       },
                       '& fieldset': {
@@ -1093,13 +1626,13 @@ function HomePage() {
                       },
                       '&.Mui-focused fieldset': {
                         borderColor: 'transparent'
-                      }
                     }
-                  }}
-                />
-              </Grid>
+                  }
+                }}
+              />
+            </Grid>
 
-              <Grid item xs={12}>
+            <Grid item xs={12}>
                 <Typography variant="subtitle2" sx={{ 
                   color: '#64748b', 
                   mb: 1, 
@@ -1111,10 +1644,10 @@ function HomePage() {
                   <InsertLinkIcon sx={{ fontSize: 18 }} />
                   URL de Destino
                 </Typography>
-                <TextField
-                  fullWidth
-                  value={editForm.destinationUrl}
-                  onChange={(e) => setEditForm({ ...editForm, destinationUrl: e.target.value })}
+              <TextField
+                fullWidth
+                value={editForm.destinationUrl}
+                onChange={(e) => setEditForm({ ...editForm, destinationUrl: e.target.value })}
                   placeholder="Cole a URL de destino aqui"
                   size="small"
                   InputProps={{
@@ -1122,20 +1655,20 @@ function HomePage() {
                       height: '44px',
                     }
                   }}
-                  sx={{ 
-                    '& .MuiOutlinedInput-root': { 
-                      borderRadius: 2,
-                      bgcolor: '#f8fafc',
-                      border: '1px solid rgba(0,0,0,0.08)',
+                sx={{ 
+                  '& .MuiOutlinedInput-root': { 
+                    borderRadius: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid rgba(0,0,0,0.08)',
                       transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        borderColor: '#1976d2',
+                    '&:hover': {
+                      borderColor: '#1976d2',
                         bgcolor: '#fff',
                         boxShadow: '0 0 0 1px rgba(25, 118, 210, 0.1)'
-                      },
-                      '&.Mui-focused': {
-                        borderColor: '#1976d2',
-                        bgcolor: '#fff',
+                    },
+                    '&.Mui-focused': {
+                      borderColor: '#1976d2',
+                      bgcolor: '#fff',
                         boxShadow: '0 0 0 3px rgba(25, 118, 210, 0.1)'
                       },
                       '& fieldset': {
@@ -1146,13 +1679,13 @@ function HomePage() {
                       },
                       '&.Mui-focused fieldset': {
                         borderColor: 'transparent'
-                      }
                     }
-                  }}
-                />
-              </Grid>
+                  }
+                }}
+              />
             </Grid>
-          </DialogContent>
+          </Grid>
+        </DialogContent>
 
           <DialogActions sx={{ 
             p: 3, 

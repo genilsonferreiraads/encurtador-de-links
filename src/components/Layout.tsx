@@ -18,19 +18,19 @@ export default function Layout() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const loadUser = async () => {
-    try {
-      const userData = await getCurrentUser();
-      if (!userData) {
+    const loadUser = async () => {
+      try {
+        const userData = await getCurrentUser();
+        if (!userData) {
+          navigate('/login');
+          return;
+        }
+        setUser(userData);
+      } catch (error) {
+        console.error('Error loading user:', error);
         navigate('/login');
-        return;
       }
-      setUser(userData);
-    } catch (error) {
-      console.error('Error loading user:', error);
-      navigate('/login');
-    }
-  };
+    };
 
   useEffect(() => {
     loadUser();
@@ -70,9 +70,9 @@ export default function Layout() {
   };
 
   const mainMenuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Criar Link', icon: <AddIcon />, path: '/criar-link' },
-    { text: 'Links Criados', icon: <ListIcon />, path: '/links' },
+    { text: 'Links Criados', icon: <ListIcon />, path: '/' },
   ];
 
   const settingsMenuItems = user?.role === 'admin' ? [
@@ -606,4 +606,4 @@ export default function Layout() {
       </Box>
     </Box>
   );
-}
+} 

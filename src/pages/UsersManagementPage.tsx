@@ -37,7 +37,9 @@ import {
   Key as KeyIcon,
   Badge as BadgeIcon,
   Close as CloseIcon,
-  AlternateEmail as AlternateEmailIcon
+  AlternateEmail as AlternateEmailIcon,
+  Delete as DeleteIcon,
+  Warning as WarningIcon
 } from '@mui/icons-material';
 import { supabase } from '../services/supabase';
 import { Usuario } from '../services/supabase';
@@ -57,6 +59,7 @@ function UsersManagementPage() {
   const [editingUser, setEditingUser] = useState<Usuario | null>(null);
   const [editUsername, setEditUsername] = useState('');
   const [editPassword, setEditPassword] = useState('');
+  const [deletingUser, setDeletingUser] = useState<Usuario | null>(null);
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
@@ -70,14 +73,22 @@ function UsersManagementPage() {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data: users, error } = await supabase
         .from('usuarios')
         .select('*')
+        .order('role', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setUsers(data || []);
+      // Ordenar usuários: admin primeiro, depois usuários por data de criação (mais recente primeiro)
+      const sortedUsers = users?.sort((a, b) => {
+        if (a.role === 'admin') return -1;
+        if (b.role === 'admin') return 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+
+      setUsers(sortedUsers || []);
     } catch (error: any) {
       console.error('Erro ao carregar usuários:', error);
       showNotification('Erro ao carregar usuários', 'error');
@@ -136,14 +147,14 @@ function UsersManagementPage() {
     try {
       setLoading(true);
 
-      if (!editUsername) {
+      if (!editingUser?.username) {
         throw new Error('Nome de usuário é obrigatório');
       }
 
       // Atualiza o usuário usando a nova função que atualiza username e senha
       const { error: updateError } = await supabase.rpc('update_user_info', {
         p_user_id: editingUser?.id,
-        p_new_username: editUsername,
+        p_new_username: editingUser.username,
         p_new_password: editPassword || null
       });
 
@@ -154,6 +165,29 @@ function UsersManagementPage() {
       loadUsers();
     } catch (error: any) {
       console.error('Erro ao atualizar usuário:', error);
+      showNotification(error.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('usuarios')
+        .delete()
+        .eq('id', deletingUser.id);
+
+      if (error) throw error;
+
+      showNotification('Usuário excluído com sucesso!', 'success');
+      setDeletingUser(null);
+      loadUsers();
+    } catch (error: any) {
+      console.error('Erro ao excluir usuário:', error);
       showNotification(error.message, 'error');
     } finally {
       setLoading(false);
@@ -462,21 +496,40 @@ function UsersManagementPage() {
                           }}>
                             Criado em {new Date(user.created_at).toLocaleDateString('pt-BR')}
                           </Typography>
-                          <IconButton 
-                            onClick={() => handleEditUser(user)}
-                            sx={{ 
-                              width: 32,
-                              height: 32,
-                              bgcolor: 'rgba(25, 118, 210, 0.08)',
-                              color: '#1976d2',
-                              '&:hover': { 
-                                bgcolor: 'rgba(25, 118, 210, 0.16)',
-                                transform: 'translateY(-1px)'
-                              }
-                            }}
-                          >
-                            <EditIcon sx={{ fontSize: 16 }} />
-                          </IconButton>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <IconButton 
+                              onClick={() => handleEditUser(user)}
+                              sx={{ 
+                                width: 32,
+                                height: 32,
+                                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                color: '#1976d2',
+                                '&:hover': { 
+                                  bgcolor: 'rgba(25, 118, 210, 0.16)',
+                                  transform: 'translateY(-1px)'
+                                }
+                              }}
+                            >
+                              <EditIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                            {user.role !== 'admin' && (
+                              <IconButton 
+                                onClick={() => setDeletingUser(user)}
+                                sx={{ 
+                                  width: 32,
+                                  height: 32,
+                                  bgcolor: 'rgba(239, 68, 68, 0.08)',
+                                  color: '#ef4444',
+                                  '&:hover': { 
+                                    bgcolor: 'rgba(239, 68, 68, 0.16)',
+                                    transform: 'translateY(-1px)'
+                                  }
+                                }}
+                              >
+                                <DeleteIcon sx={{ fontSize: 16 }} />
+                              </IconButton>
+                            )}
+                          </Box>
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -486,6 +539,110 @@ function UsersManagementPage() {
             </Table>
           </Box>
         </Paper>
+
+        {/* Modal de Confirmação de Exclusão */}
+        <Dialog
+          open={!!deletingUser}
+          onClose={() => setDeletingUser(null)}
+          PaperProps={{
+            sx: {
+              borderRadius: { xs: 0, sm: 3 },
+              width: { xs: '100%', sm: '400px' },
+              maxWidth: '100%',
+              m: { xs: 0, sm: 3 }
+            }
+          }}
+        >
+          <DialogTitle sx={{ 
+            p: { xs: 2, sm: 3 },
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            background: 'linear-gradient(145deg, #fee2e2 0%, #fff 100%)',
+            borderBottom: '1px solid',
+            borderColor: 'divider'
+          }}>
+            <Box sx={{ 
+              bgcolor: '#ef4444',
+              p: 1,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <WarningIcon sx={{ color: '#fff' }} />
+            </Box>
+            <Typography sx={{ 
+              fontWeight: 600,
+              color: '#ef4444',
+              fontSize: { xs: '1.25rem', sm: '1.25rem' }
+            }}>
+              Confirmar Exclusão
+            </Typography>
+          </DialogTitle>
+
+          <DialogContent sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 } }}>
+            <Typography sx={{ color: '#475569' }}>
+              Tem certeza que deseja excluir o usuário <strong>{deletingUser?.full_name}</strong>? Esta ação não pode ser desfeita.
+            </Typography>
+          </DialogContent>
+
+          <DialogActions sx={{ 
+            p: { xs: 2, sm: 3 },
+            gap: { xs: 2, sm: 1 },
+            flexDirection: { xs: 'column', sm: 'row' },
+            background: 'linear-gradient(145deg, #fff 0%, #fafafa 100%)'
+          }}>
+            <Button
+              variant="outlined"
+              onClick={() => setDeletingUser(null)}
+              fullWidth={isMobile}
+              sx={{ 
+                borderRadius: '10px',
+                px: 3,
+                py: { xs: 1.5, sm: 1 },
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#e2e8f0',
+                color: '#64748b',
+                order: { xs: 2, sm: 1 },
+                '&:hover': {
+                  borderColor: '#cbd5e1',
+                  bgcolor: '#f8fafc'
+                }
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleDeleteUser}
+              variant="contained"
+              disabled={loading}
+              fullWidth={isMobile}
+              sx={{
+                borderRadius: '10px',
+                px: 3,
+                py: { xs: 1.5, sm: 1 },
+                textTransform: 'none',
+                fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                order: { xs: 1, sm: 2 },
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 16px rgba(239, 68, 68, 0.3)'
+                }
+              }}
+            >
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: 'white' }} />
+              ) : (
+                'Excluir Usuário'
+              )}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Modal de Edição */}
         <Dialog 
@@ -545,6 +702,7 @@ function UsersManagementPage() {
                 value={editingUser?.username || ''}
                 onChange={(e) => setEditingUser(prev => prev ? { ...prev, username: e.target.value } : null)}
                 fullWidth
+                required
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
