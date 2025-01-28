@@ -327,11 +327,11 @@ export default function DashboardPage() {
     >
       <Fade in timeout={800}>
         <Box>
-          <Typography 
-            variant="h5" 
-            sx={{ 
+      <Typography 
+        variant="h5" 
+        sx={{ 
               mb: { xs: 2, sm: 4 },
-              color: '#1e293b',
+          color: '#1e293b',
               fontWeight: 700,
               textAlign: 'center',
               letterSpacing: '-0.5px',
@@ -343,125 +343,125 @@ export default function DashboardPage() {
           >
             <InfoIcon sx={{ color: '#3b82f6', fontSize: 28 }} />
             Painel de Controle
-          </Typography>
+      </Typography>
 
           <Grid container spacing={{ xs: 1.5, sm: 3 }}>
-            <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
               <Zoom in timeout={400}>
-                <Paper
-                  elevation={0}
-                  sx={{
+          <Paper
+            elevation={0}
+            sx={{
                     p: { xs: 2, sm: 3 },
                     borderRadius: 4,
-                    bgcolor: '#3b82f6',
+              bgcolor: '#3b82f6',
                     height: '100%',
                     minHeight: { xs: '120px', sm: '140px' },
                     transition: 'all 0.3s ease-in-out',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    '&:hover': {
+              '&:hover': {
                       transform: { xs: 'none', sm: 'translateY(-4px)' },
                       boxShadow: '0 12px 24px rgba(59, 130, 246, 0.15)'
-                    }
-                  }}
-                >
+              }
+            }}
+          >
                   <Typography variant="subtitle1" sx={{ color: 'rgba(255, 255, 255, 0.9)', mb: 2, fontWeight: 500 }}>
-                    Total de Links
-                  </Typography>
+              Total de Links
+            </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
                     <Typography variant="h3" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1, fontSize: { xs: '2rem', sm: '2.5rem' } }}>
-                      {stats.totalLinks}
-                    </Typography>
+              {stats.totalLinks}
+            </Typography>
                     <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
                       links
                     </Typography>
                   </Box>
-                </Paper>
+          </Paper>
               </Zoom>
-            </Grid>
+        </Grid>
 
-            <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
               <Zoom in timeout={600}>
-                <Paper
-                  elevation={0}
-                  sx={{
+          <Paper
+            elevation={0}
+            sx={{
                     p: { xs: 2, sm: 3 },
                     borderRadius: 4,
-                    bgcolor: '#22c55e',
+              bgcolor: '#22c55e',
                     height: '100%',
                     minHeight: { xs: '120px', sm: '140px' },
                     transition: 'all 0.3s ease-in-out',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    '&:hover': {
+              '&:hover': {
                       transform: { xs: 'none', sm: 'translateY(-4px)' },
                       boxShadow: '0 12px 24px rgba(34, 197, 94, 0.15)'
-                    }
-                  }}
-                >
+              }
+            }}
+          >
                   <Typography variant="subtitle1" sx={{ color: 'rgba(255, 255, 255, 0.9)', mb: 2, fontWeight: 500 }}>
                     Links Recentes
-                  </Typography>
+            </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}>
                     <Typography variant="h3" sx={{ color: '#fff', fontWeight: 700, lineHeight: 1, fontSize: { xs: '2rem', sm: '2.5rem' } }}>
-                      {stats.recentLinks}
-                    </Typography>
+              {stats.recentLinks}
+            </Typography>
                     <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', mb: 1 }}>
                       últimos 7 dias
                     </Typography>
                   </Box>
-                </Paper>
+          </Paper>
               </Zoom>
-            </Grid>
+        </Grid>
 
-            <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={4}>
               <Zoom in timeout={800}>
-                <Paper
-                  elevation={0}
-                  sx={{
+          <Paper
+            elevation={0}
+            sx={{
                     p: { xs: 2, sm: 3 },
                     borderRadius: 4,
-                    bgcolor: '#8b5cf6',
+              bgcolor: '#8b5cf6',
                     height: '100%',
                     minHeight: { xs: '120px', sm: '140px' },
                     transition: 'all 0.3s ease-in-out',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    position: 'relative',
-                    '&:hover': {
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              position: 'relative',
+              '&:hover': {
                       transform: { xs: 'none', sm: 'translateY(-4px)' },
                       boxShadow: '0 12px 24px rgba(139, 92, 246, 0.15)'
-                    }
-                  }}
-                >
+              }
+            }}
+          >
                   <Typography variant="subtitle1" sx={{ color: 'rgba(255, 255, 255, 0.9)', mb: 2, fontWeight: 500 }}>
                     Último Link
-                  </Typography>
-                  {stats?.lastModifiedLink ? (
-                    <>
+            </Typography>
+            {stats?.lastModifiedLink ? (
+              <>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Typography 
                           sx={{ 
                             color: '#fff',
                             fontWeight: 500,
                             fontSize: { xs: '0.9rem', sm: '1.1rem' },
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '80%'
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  maxWidth: '80%'
                           }}
                         >
-                          {stats.lastModifiedLink.title || stats.lastModifiedLink.slug || 'Sem título'}
-                        </Typography>
-                        <IconButton
-                          onClick={() => setOpenPopupId(stats.lastModifiedLink.id)}
-                          size="small"
-                          sx={{
-                            color: 'white',
-                            '&:hover': {
+                  {stats.lastModifiedLink.title || stats.lastModifiedLink.slug || 'Sem título'}
+                </Typography>
+                <IconButton
+                  onClick={() => setOpenPopupId(stats.lastModifiedLink.id)}
+                  size="small"
+                  sx={{
+                    color: 'white',
+                    '&:hover': {
                               bgcolor: 'rgba(255, 255, 255, 0.1)',
                               transform: 'scale(1.1)'
                             },
@@ -469,28 +469,28 @@ export default function DashboardPage() {
                           }}
                         >
                           <InfoIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
-                        </IconButton>
+                </IconButton>
                       </Box>
-                    </>
-                  ) : (
+              </>
+            ) : (
                     <Typography variant="body1" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-                      Nenhum link encontrado
-                    </Typography>
-                  )}
-                </Paper>
+                Nenhum link encontrado
+              </Typography>
+            )}
+          </Paper>
               </Zoom>
-            </Grid>
+        </Grid>
 
-            {/* Gráficos */}
-            <Grid item xs={12} md={6}>
+        {/* Gráficos */}
+        <Grid item xs={12} md={6}>
               <Fade in timeout={1000}>
-                <Paper
-                  elevation={0}
-                  sx={{
+          <Paper
+            elevation={0}
+            sx={{
                     p: 3,
                     borderRadius: 4,
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    bgcolor: '#fff',
+              border: '1px solid rgba(0,0,0,0.08)',
+              bgcolor: '#fff',
                     height: '100%',
                     minHeight: 400,
                     transition: 'all 0.3s ease-in-out',
@@ -512,12 +512,12 @@ export default function DashboardPage() {
                     }}
                   >
                     <TimeIcon sx={{ color: '#3b82f6', fontSize: 24 }} />
-                    Cliques por Dia
-                  </Typography>
+              Cliques por Dia
+            </Typography>
                   <Box sx={{ height: 300 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={stats.dailyClicks} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                         <XAxis 
                           dataKey="date" 
                           stroke="#64748b" 
@@ -531,45 +531,45 @@ export default function DashboardPage() {
                           tickMargin={8}
                           axisLine={{ stroke: '#e2e8f0' }}
                         />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#fff',
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
                             border: 'none',
                             borderRadius: '12px',
                             padding: '12px 16px',
                             boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                          }}
-                        />
-                        <Bar 
-                          dataKey="count" 
-                          name="Cliques" 
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={40}
-                        >
-                          {stats.dailyClicks.map((entry, index) => (
+                  }}
+                />
+                <Bar 
+                  dataKey="count" 
+                  name="Cliques" 
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                >
+                  {stats.dailyClicks.map((entry, index) => (
                             <Cell 
                               key={`cell-${index}`} 
                               fill={COLORS[index % COLORS.length]} 
                               fillOpacity={0.9}
                             />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
                   </Box>
-                </Paper>
+          </Paper>
               </Fade>
-            </Grid>
+        </Grid>
 
-            <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6}>
               <Fade in timeout={1200}>
-                <Paper
-                  elevation={0}
-                  sx={{
+          <Paper
+            elevation={0}
+            sx={{
                     p: 3,
                     borderRadius: 4,
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    bgcolor: '#fff',
+              border: '1px solid rgba(0,0,0,0.08)',
+              bgcolor: '#fff',
                     height: '100%',
                     minHeight: 400,
                     transition: 'all 0.3s ease-in-out',
@@ -592,11 +592,11 @@ export default function DashboardPage() {
                   >
                     <TimeIcon sx={{ color: '#22c55e', fontSize: 24 }} />
                     Evolução Mensal
-                  </Typography>
+            </Typography>
                   <Box sx={{ height: 300 }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={stats.monthlyClicks} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                         <XAxis 
                           dataKey="month" 
                           stroke="#64748b" 
@@ -610,40 +610,40 @@ export default function DashboardPage() {
                           tickMargin={8}
                           axisLine={{ stroke: '#e2e8f0' }}
                         />
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#fff',
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#fff',
                             border: 'none',
                             borderRadius: '12px',
                             padding: '12px 16px',
                             boxShadow: '0 4px 16px rgba(0,0,0,0.1)'
-                          }}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="count" 
-                          name="Cliques" 
-                          stroke="#22c55e"
+                  }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="count" 
+                  name="Cliques" 
+                  stroke="#22c55e"
                           strokeWidth={3}
                           dot={{ r: 4, fill: '#22c55e', strokeWidth: 2, stroke: '#fff' }}
                           activeDot={{ r: 6, fill: '#22c55e', strokeWidth: 2, stroke: '#fff' }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
+                />
+              </LineChart>
+            </ResponsiveContainer>
                   </Box>
-                </Paper>
+          </Paper>
               </Fade>
-            </Grid>
+        </Grid>
 
             <Grid item xs={12}>
               <Fade in timeout={1400}>
-                <Paper
-                  elevation={0}
-                  sx={{
+          <Paper
+            elevation={0}
+            sx={{
                     p: 3,
                     borderRadius: 4,
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    bgcolor: '#fff',
+              border: '1px solid rgba(0,0,0,0.08)',
+              bgcolor: '#fff',
                     height: '100%',
                     minHeight: 400,
                     transition: 'all 0.3s ease-in-out',
@@ -666,7 +666,7 @@ export default function DashboardPage() {
                   >
                     <TrendingUpIcon sx={{ color: '#8b5cf6', fontSize: 24 }} />
                     Top Links Mais Clicados
-                  </Typography>
+            </Typography>
                   <Box sx={{ height: 400, overflow: 'hidden' }}>
                     {stats.linkClicks
                       .sort((a, b) => b.value - a.value)
@@ -753,10 +753,10 @@ export default function DashboardPage() {
                         </Box>
                     ))}
                   </Box>
-                </Paper>
+          </Paper>
               </Fade>
-            </Grid>
-          </Grid>
+        </Grid>
+      </Grid>
         </Box>
       </Fade>
 
@@ -814,18 +814,18 @@ export default function DashboardPage() {
               <Grid item xs={12}>
                 <Zoom in timeout={400}>
                   <Box>
-                    <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <TitleIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
-                      <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                        Título
-                      </Typography>
-                    </Box>
-                    {editMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        value={editForm.title}
-                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                    Título
+                  </Typography>
+                </Box>
+                {editMode ? (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={editForm.title}
+                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                         sx={{ 
                           bgcolor: '#fff',
                           '& .MuiOutlinedInput-root': {
@@ -838,27 +838,27 @@ export default function DashboardPage() {
                             }
                           }
                         }}
-                      />
-                    ) : (
-                      <Paper 
-                        elevation={0}
-                        sx={{ 
-                          p: 2,
-                          bgcolor: '#f8fafc',
-                          border: '1px solid rgba(0,0,0,0.08)',
+                  />
+                ) : (
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid rgba(0,0,0,0.08)',
                           borderRadius: 2,
                           transition: 'all 0.2s ease',
                           '&:hover': {
                             bgcolor: '#f1f5f9',
                             borderColor: 'rgba(59, 130, 246, 0.2)'
                           }
-                        }}
-                      >
-                        <Typography sx={{ color: '#1e293b', fontWeight: 500 }}>
-                          {stats.lastModifiedLink.title || 'Link sem título'}
-                        </Typography>
-                      </Paper>
-                    )}
+                  }}
+                >
+                  <Typography sx={{ color: '#1e293b', fontWeight: 500 }}>
+                    {stats.lastModifiedLink.title || 'Link sem título'}
+                  </Typography>
+                </Paper>
+                )}
                   </Box>
                 </Zoom>
               </Grid>
@@ -866,18 +866,18 @@ export default function DashboardPage() {
               <Grid item xs={12}>
                 <Zoom in timeout={600}>
                   <Box>
-                    <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <LinkIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
-                      <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                        Slug
-                      </Typography>
-                    </Box>
-                    {editMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        value={editForm.slug}
-                        onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
+                  <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                    Slug
+                  </Typography>
+                </Box>
+                {editMode ? (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={editForm.slug}
+                    onChange={(e) => setEditForm({ ...editForm, slug: e.target.value })}
                         sx={{ 
                           bgcolor: '#fff',
                           '& .MuiOutlinedInput-root': {
@@ -890,27 +890,27 @@ export default function DashboardPage() {
                             }
                           }
                         }}
-                      />
-                    ) : (
-                      <Paper 
-                        elevation={0}
-                        sx={{ 
-                          p: 2,
-                          bgcolor: '#f8fafc',
-                          border: '1px solid rgba(0,0,0,0.08)',
+                  />
+                ) : (
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid rgba(0,0,0,0.08)',
                           borderRadius: 2,
                           transition: 'all 0.2s ease',
                           '&:hover': {
                             bgcolor: '#f1f5f9',
                             borderColor: 'rgba(59, 130, 246, 0.2)'
                           }
-                        }}
-                      >
-                        <Typography sx={{ color: '#1e293b', fontWeight: 500 }}>
-                          {stats.lastModifiedLink.slug}
-                        </Typography>
-                      </Paper>
-                    )}
+                  }}
+                >
+                  <Typography sx={{ color: '#1e293b', fontWeight: 500 }}>
+                    {stats.lastModifiedLink.slug}
+                  </Typography>
+                </Paper>
+                )}
                   </Box>
                 </Zoom>
               </Grid>
@@ -918,18 +918,18 @@ export default function DashboardPage() {
               <Grid item xs={12}>
                 <Zoom in timeout={800}>
                   <Box>
-                    <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                       <InsertLinkIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
-                      <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                        URL de Destino
-                      </Typography>
-                    </Box>
-                    {editMode ? (
-                      <TextField
-                        fullWidth
-                        size="small"
-                        value={editForm.destination_url}
-                        onChange={(e) => setEditForm({ ...editForm, destination_url: e.target.value })}
+                  <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                    URL de Destino
+                  </Typography>
+                </Box>
+                {editMode ? (
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={editForm.destination_url}
+                    onChange={(e) => setEditForm({ ...editForm, destination_url: e.target.value })}
                         sx={{ 
                           bgcolor: '#fff',
                           '& .MuiOutlinedInput-root': {
@@ -942,49 +942,49 @@ export default function DashboardPage() {
                             }
                           }
                         }}
-                      />
-                    ) : (
-                      <Paper 
-                        elevation={0}
-                        sx={{ 
-                          p: 2,
-                          bgcolor: '#f8fafc',
-                          border: '1px solid rgba(0,0,0,0.08)',
-                          borderRadius: 2,
-                          display: 'flex',
-                          alignItems: 'center',
+                  />
+                ) : (
+                  <Paper 
+                    elevation={0}
+                    sx={{ 
+                      p: 2,
+                      bgcolor: '#f8fafc',
+                      border: '1px solid rgba(0,0,0,0.08)',
+                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
                           justifyContent: 'space-between',
                           transition: 'all 0.2s ease',
                           '&:hover': {
                             bgcolor: '#f1f5f9',
                             borderColor: 'rgba(59, 130, 246, 0.2)'
                           }
-                        }}
-                      >
-                        <Typography sx={{ color: '#1e293b', fontWeight: 500, wordBreak: 'break-all', flex: 1 }}>
-                          {stats.lastModifiedLink.destination_url}
-                        </Typography>
-                        <IconButton 
-                          size="small"
-                          href={stats.lastModifiedLink.destination_url}
-                          target="_blank"
-                          sx={{ 
-                            ml: 2,
+                    }}
+                  >
+                    <Typography sx={{ color: '#1e293b', fontWeight: 500, wordBreak: 'break-all', flex: 1 }}>
+                      {stats.lastModifiedLink.destination_url}
+                    </Typography>
+                    <IconButton 
+                      size="small"
+                      href={stats.lastModifiedLink.destination_url}
+                      target="_blank"
+                      sx={{ 
+                        ml: 2,
                             color: '#3b82f6',
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                            '&:hover': { 
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': { 
                               bgcolor: 'rgba(59, 130, 246, 0.08)',
-                              transform: 'scale(1.15) rotate(8deg)',
-                            },
-                            '&:active': {
-                              transform: 'scale(0.95) rotate(0deg)',
-                            }
-                          }}
-                        >
-                          <LaunchIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
-                      </Paper>
-                    )}
+                          transform: 'scale(1.15) rotate(8deg)',
+                        },
+                        '&:active': {
+                          transform: 'scale(0.95) rotate(0deg)',
+                        }
+                      }}
+                    >
+                      <LaunchIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Paper>
+                )}
                   </Box>
                 </Zoom>
               </Grid>
@@ -994,121 +994,121 @@ export default function DashboardPage() {
                   <Grid item xs={12}>
                     <Zoom in timeout={1000}>
                       <Box>
-                        <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <QrCodeIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
-                          <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                            Link Encurtado
-                          </Typography>
-                        </Box>
-                        <Paper 
-                          elevation={0}
-                          sx={{ 
-                            p: 2,
-                            bgcolor: '#f8fafc',
-                            border: '1px solid rgba(0,0,0,0.08)',
-                            borderRadius: 2,
-                            display: 'flex',
-                            alignItems: 'center',
+                      <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                        Link Encurtado
+                  </Typography>
+                </Box>
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
                             justifyContent: 'space-between',
                             transition: 'all 0.2s ease',
                             '&:hover': {
                               bgcolor: '#f1f5f9',
                               borderColor: 'rgba(59, 130, 246, 0.2)'
                             }
-                          }}
-                        >
-                          <Typography sx={{ color: '#1e293b', fontWeight: 500, wordBreak: 'break-all', flex: 1 }}>
-                            {getShortUrl(stats.lastModifiedLink.slug)}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
-                            <IconButton 
-                              size="small"
-                              onClick={() => handleCopyLink(getShortUrl(stats.lastModifiedLink.slug))}
-                              sx={{ 
+                  }}
+                >
+                  <Typography sx={{ color: '#1e293b', fontWeight: 500, wordBreak: 'break-all', flex: 1 }}>
+                    {getShortUrl(stats.lastModifiedLink.slug)}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
+                    <IconButton 
+                      size="small"
+                      onClick={() => handleCopyLink(getShortUrl(stats.lastModifiedLink.slug))}
+                      sx={{ 
                                 color: copySuccess === getShortUrl(stats.lastModifiedLink.slug) ? '#22c55e' : '#3b82f6',
-                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                '&:hover': { 
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': { 
                                   bgcolor: 'rgba(59, 130, 246, 0.08)',
-                                  transform: 'scale(1.15) rotate(8deg)',
-                                },
-                                '&:active': {
-                                  transform: 'scale(0.95) rotate(0deg)',
-                                }
-                              }}
-                            >
-                              <ContentCopyIcon sx={{ fontSize: 18 }} />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              href={getShortUrl(stats.lastModifiedLink.slug)}
-                              target="_blank"
-                              sx={{ 
+                          transform: 'scale(1.15) rotate(8deg)',
+                        },
+                        '&:active': {
+                          transform: 'scale(0.95) rotate(0deg)',
+                        }
+                      }}
+                    >
+                      <ContentCopyIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      href={getShortUrl(stats.lastModifiedLink.slug)}
+                      target="_blank"
+                      sx={{ 
                                 color: '#3b82f6',
-                                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                                '&:hover': { 
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        '&:hover': { 
                                   bgcolor: 'rgba(59, 130, 246, 0.08)',
-                                  transform: 'scale(1.15) rotate(8deg)',
-                                },
-                                '&:active': {
-                                  transform: 'scale(0.95) rotate(0deg)',
-                                }
-                              }}
-                            >
-                              <LaunchIcon sx={{ fontSize: 18 }} />
-                            </IconButton>
-                          </Box>
-                        </Paper>
+                          transform: 'scale(1.15) rotate(8deg)',
+                        },
+                        '&:active': {
+                          transform: 'scale(0.95) rotate(0deg)',
+                        }
+                      }}
+                    >
+                      <LaunchIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Box>
+                </Paper>
                       </Box>
                     </Zoom>
-                  </Grid>
+              </Grid>
 
-                  <Grid item xs={12}>
+              <Grid item xs={12}>
                     <Zoom in timeout={1200}>
                       <Box>
-                        <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                           <AccessTimeIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
-                          <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
-                            Informações Adicionais
-                          </Typography>
-                        </Box>
-                        <Paper 
-                          elevation={0}
-                          sx={{ 
-                            p: 2,
-                            bgcolor: '#f8fafc',
-                            border: '1px solid rgba(0,0,0,0.08)',
+                  <Typography variant="subtitle2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                    Informações Adicionais
+                  </Typography>
+                </Box>
+                <Paper 
+                  elevation={0}
+                  sx={{ 
+                    p: 2,
+                    bgcolor: '#f8fafc',
+                    border: '1px solid rgba(0,0,0,0.08)',
                             borderRadius: 2,
                             transition: 'all 0.2s ease',
                             '&:hover': {
                               bgcolor: '#f1f5f9',
                               borderColor: 'rgba(59, 130, 246, 0.2)'
                             }
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  }}
+                >
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <FlashOnIcon sx={{ fontSize: 16 }} />
-                                Criado em:
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: '#1e293b', fontWeight: 500 }}>
-                                {new Date(stats.lastModifiedLink.created_at).toLocaleString()}
-                              </Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        Criado em:
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#1e293b', fontWeight: 500 }}>
+                        {new Date(stats.lastModifiedLink.created_at).toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 1 }}>
                                 <TimerIcon sx={{ fontSize: 16 }} />
-                                Última atualização:
-                              </Typography>
-                              <Typography variant="body2" sx={{ color: '#1e293b', fontWeight: 500 }}>
-                                {new Date(stats.lastModifiedLink.updated_at || stats.lastModifiedLink.created_at).toLocaleString()}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </Paper>
+                        Última atualização:
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#1e293b', fontWeight: 500 }}>
+                        {new Date(stats.lastModifiedLink.updated_at || stats.lastModifiedLink.created_at).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Paper>
                       </Box>
                     </Zoom>
-                  </Grid>
+              </Grid>
                 </>
               )}
             </Grid>
@@ -1161,30 +1161,30 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
-                <Button
-                  onClick={() => setOpenPopupId(null)}
-                  variant="outlined"
-                  color="inherit"
+            <Button
+              onClick={() => setOpenPopupId(null)}
+              variant="outlined"
+              color="inherit"
                   startIcon={<CloseIcon />}
-                  sx={{ 
-                    color: '#64748b',
-                    borderColor: 'rgba(100, 116, 139, 0.5)',
-                    '&:hover': {
-                      borderColor: '#64748b',
+              sx={{ 
+                color: '#64748b',
+                borderColor: 'rgba(100, 116, 139, 0.5)',
+                '&:hover': {
+                  borderColor: '#64748b',
                       bgcolor: 'rgba(100, 116, 139, 0.08)',
                       transform: 'translateY(-1px)'
                     },
                     transition: 'all 0.2s ease'
-                  }}
-                >
-                  Fechar
-                </Button>
-                <Box sx={{ flex: 1 }} />
-                <Button
-                  onClick={() => handleDeleteLink(stats.lastModifiedLink.id)}
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteIcon />}
+              }}
+            >
+              Fechar
+            </Button>
+            <Box sx={{ flex: 1 }} />
+            <Button
+              onClick={() => handleDeleteLink(stats.lastModifiedLink.id)}
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
                   sx={{ 
                     mr: 1,
                     '&:hover': {
@@ -1192,13 +1192,13 @@ export default function DashboardPage() {
                     },
                     transition: 'all 0.2s ease'
                   }}
-                >
-                  Excluir
-                </Button>
-                <Button
-                  onClick={() => handleEditLink(stats.lastModifiedLink.id)}
-                  variant="contained"
-                  startIcon={<EditIcon />}
+            >
+              Excluir
+            </Button>
+            <Button
+              onClick={() => handleEditLink(stats.lastModifiedLink.id)}
+              variant="contained"
+              startIcon={<EditIcon />}
                   sx={{
                     bgcolor: '#3b82f6',
                     '&:hover': {
@@ -1207,9 +1207,9 @@ export default function DashboardPage() {
                     },
                     transition: 'all 0.2s ease'
                   }}
-                >
-                  Editar
-                </Button>
+            >
+              Editar
+            </Button>
               </>
             )}
           </DialogActions>

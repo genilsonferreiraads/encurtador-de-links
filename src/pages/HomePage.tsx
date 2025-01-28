@@ -144,6 +144,7 @@ function HomePage() {
         .from('links')
         .select('id, title, slug, destination_url, created_at, clicks, advanced_type, expires_at, is_destroyed')
         .eq('user_id', user.id)
+        .eq('is_bio_link', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -1093,18 +1094,6 @@ function HomePage() {
                                             </Typography>
                                             <Box sx={{ display: 'flex', gap: 0.5 }}>
                                               <IconButton
-                                                onClick={() => setOpenQRCodeId(link.id)}
-                                                size="small"
-                                                sx={{ 
-                                                  color: 'primary.main',
-                                                  '&:hover': {
-                                                    bgcolor: 'rgba(25, 118, 210, 0.08)'
-                                                  }
-                                                }}
-                                              >
-                                                <QrCodeIcon sx={{ fontSize: 20 }} />
-                                              </IconButton>
-                                              <IconButton
                                                 component={Link}
                                                 href={getShortUrl(link.slug)}
                                                 target="_blank"
@@ -1179,6 +1168,98 @@ function HomePage() {
                                               opacity: 0.7
                                             }} />
                                           </Paper>
+
+                                          {/* Advanced Features Section */}
+                                          <Box sx={{ 
+                                            mt: 2,
+                                            display: 'flex',
+                                            flexWrap: 'wrap',
+                                            gap: 1
+                                          }}>
+                                            {/* Tempo para Expirar */}
+                                            {link.advanced_type === 'expirable' && link.expires_at && (
+                                              <Chip
+                                                icon={<AccessTimeIcon sx={{ fontSize: 16 }} />}
+                                                label={getTimeRemaining(link.expires_at)}
+                                                size="small"
+                                                sx={{ 
+                                                  bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                                  color: 'primary.main',
+                                                  borderRadius: 1.5,
+                                                  '& .MuiChip-icon': {
+                                                    color: 'primary.main'
+                                                  }
+                                                }}
+                                              />
+                                            )}
+
+                                            {/* Link Autodestrutivo */}
+                                            {link.advanced_type === 'selfDestruct' && (
+                                              <Chip
+                                                icon={<FlashOnIcon sx={{ fontSize: 16 }} />}
+                                                label={link.is_destroyed ? 'Destruído' : 'Autodestrutivo'}
+                                                size="small"
+                                                sx={{ 
+                                                  bgcolor: link.is_destroyed ? 'rgba(239, 68, 68, 0.08)' : 'rgba(25, 118, 210, 0.08)',
+                                                  color: link.is_destroyed ? '#ef4444' : 'primary.main',
+                                                  borderRadius: 1.5,
+                                                  '& .MuiChip-icon': {
+                                                    color: link.is_destroyed ? '#ef4444' : 'primary.main'
+                                                  }
+                                                }}
+                                              />
+                                            )}
+
+                                            {/* Link Protegido */}
+                                            {link.advanced_type === 'password' && (
+                                              <Chip
+                                                icon={<LockIcon sx={{ fontSize: 16 }} />}
+                                                label="Protegido por senha"
+                                                size="small"
+                                                sx={{ 
+                                                  bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                                  color: 'primary.main',
+                                                  borderRadius: 1.5,
+                                                  '& .MuiChip-icon': {
+                                                    color: 'primary.main'
+                                                  }
+                                                }}
+                                              />
+                                            )}
+
+                                            {/* Contador de Cliques */}
+                                            <Chip
+                                              icon={<VisibilityIcon sx={{ fontSize: 16 }} />}
+                                              label={`${link.clicks || 0} ${link.clicks === 1 ? 'clique' : 'cliques'}`}
+                                              size="small"
+                                              sx={{ 
+                                                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                                color: 'primary.main',
+                                                borderRadius: 1.5,
+                                                '& .MuiChip-icon': {
+                                                  color: 'primary.main'
+                                                }
+                                              }}
+                                            />
+
+                                            {/* Data de Criação */}
+                                            <Chip
+                                              icon={<TimeIcon sx={{ fontSize: 16 }} />}
+                                              label={new Date(link.created_at).toLocaleDateString('pt-BR', {
+                                                day: '2-digit',
+                                                month: 'short'
+                                              })}
+                                              size="small"
+                                              sx={{ 
+                                                bgcolor: 'rgba(25, 118, 210, 0.08)',
+                                                color: 'primary.main',
+                                                borderRadius: 1.5,
+                                                '& .MuiChip-icon': {
+                                                  color: 'primary.main'
+                                                }
+                                              }}
+                                            />
+                                          </Box>
                                         </Box>
                                       </Box>
                                     </DialogContent>

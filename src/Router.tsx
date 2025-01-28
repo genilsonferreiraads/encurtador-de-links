@@ -9,6 +9,10 @@ import LoginPage from './pages/LoginPage';
 import ProfilePage from './pages/ProfilePage';
 import UsersManagementPage from './pages/UsersManagementPage';
 import Layout from './components/Layout';
+import NotFoundPage from './pages/NotFoundPage';
+import ExpiredLinkPage from './pages/ExpiredLinkPage';
+import BioLinksPage from './pages/BioLinksPage';
+import PublicBioPage from './pages/PublicBioPage';
 
 const theme = createTheme({
   palette: {
@@ -34,8 +38,12 @@ export function Router() {
           <Route path="/criar-link" element={<CreateLinkPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/usuarios" element={<UsersManagementPage />} />
+          <Route path="/bio-links" element={<BioLinksPage />} />
         </Route>
+        <Route path="/expired" element={<ExpiredLinkPage />} />
+        <Route path="/404" element={<NotFoundPage />} />
         <Route path="/:slug" element={<RedirectPage />} />
+        <Route path="/bio/:userId" element={<PublicBioPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ThemeProvider>

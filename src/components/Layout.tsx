@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
-import { Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Avatar, Menu, MenuItem, Collapse, useTheme, useMediaQuery } from '@mui/material';
+import { Box, AppBar, Toolbar, IconButton, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Avatar, Menu, MenuItem, Collapse, useTheme, useMediaQuery, CircularProgress } from '@mui/material';
 import { Link as LinkIcon, ExitToApp as LogoutIcon, Dashboard as DashboardIcon, Add as AddIcon, List as ListIcon, Person as PersonIcon, People as PeopleIcon, Settings as SettingsIcon, ExpandLess, ExpandMore, Edit as EditIcon } from '@mui/icons-material';
 import MenuIcon from './MenuIcon';
 import { useSidebar } from '../contexts/SidebarContext';
@@ -17,7 +17,9 @@ export default function Layout() {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
     const loadUser = async () => {
       try {
         const userData = await getCurrentUser();
@@ -29,18 +31,13 @@ export default function Layout() {
       } catch (error) {
         console.error('Error loading user:', error);
         navigate('/login');
+      } finally {
+        setLoading(false);
       }
     };
 
-  useEffect(() => {
     loadUser();
   }, [navigate]);
-
-  useEffect(() => {
-    if (location.pathname === '/') {
-      loadUser();
-    }
-  }, [location.pathname]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -73,11 +70,20 @@ export default function Layout() {
     { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
     { text: 'Criar Link', icon: <AddIcon />, path: '/criar-link' },
     { text: 'Links Criados', icon: <ListIcon />, path: '/' },
+    { text: 'Link para Bio', icon: <LinkIcon />, path: '/bio-links' }
   ];
 
   const settingsMenuItems = user?.role === 'admin' ? [
     { text: 'Gerenciar Usuários', icon: <PeopleIcon />, path: '/usuarios' }
   ] : [];
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (!user) {
     return null;
@@ -603,6 +609,71 @@ export default function Layout() {
       >
         <Toolbar />
         <Outlet />
+        <Box
+          component="footer"
+          sx={{
+            py: 3,
+            px: 2,
+            mt: 'auto',
+            textAlign: 'center',
+            background: 'linear-gradient(180deg, rgba(248,250,252,0) 0%, #f8fafc 100%)',
+            borderTop: '1px solid',
+            borderColor: 'rgba(0,0,0,0.08)',
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              background: 'linear-gradient(180deg, rgba(248,250,252,0) 0%, #f1f5f9 100%)',
+              '& .footer-text': {
+                transform: 'translateY(-2px)',
+                color: '#1976d2'
+              }
+            }
+          }}
+        >
+          <Typography
+            className="footer-text"
+            variant="body2"
+            sx={{
+              color: '#64748b',
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              letterSpacing: '0.02em',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.5,
+              cursor: 'pointer',
+              transition: 'all 0.3s ease-in-out',
+              '&:hover': {
+                color: '#1976d2',
+                transform: 'translateY(-2px)',
+                '& .copyright': {
+                  transform: 'rotate(360deg)'
+                }
+              },
+              '& .copyright': {
+                color: '#1976d2',
+                fontWeight: 700,
+                mx: 0.5,
+                display: 'inline-block',
+                transition: 'transform 0.5s ease-in-out'
+              }
+            }}
+          >
+            Created by <span className="copyright">©</span> Genilson Ferreira
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              mt: 0.5,
+              color: '#94a3b8',
+              fontSize: '0.75rem',
+              fontWeight: 500
+            }}
+          >
+            Encurtador de Links • {new Date().getFullYear()}
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
