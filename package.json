@@ -16,7 +16,7 @@
     "@emotion/styled": "^11.11.0",
     "@google/generative-ai": "^0.21.0",
     "@mui/icons-material": "^5.11.16",
-    "@mui/lab": "^6.0.0-beta.24",
+    "@mui/lab": "^5.0.0-alpha.153",
     "@mui/material": "^5.13.0",
     "@netlify/functions": "^1.6.0",
     "@supabase/supabase-js": "^2.21.0",
