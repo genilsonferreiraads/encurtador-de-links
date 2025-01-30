@@ -277,6 +277,14 @@ function HomePage() {
     return 'Menos de 1 minuto para expirar';
   };
 
+  const handleQRCodeClick = (id: number) => {
+    setOpenQRCodeId(id);
+  };
+
+  const handleQRCodeClose = () => {
+    setOpenQRCodeId(null);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
@@ -1283,192 +1291,88 @@ function HomePage() {
                                     {/* QR Code Dialog */}
                                     <Dialog
                                       open={openQRCodeId === link.id}
-                                      onClose={() => setOpenQRCodeId(null)}
+                                      onClose={handleQRCodeClose}
                                       maxWidth="xs"
-                                      TransitionComponent={Zoom}
-                                      sx={{ 
-                                        '& .MuiDialog-paper': { 
-                                          width: { xs: 'calc(100% - 32px)', sm: '360px' },
-                                          m: 2,
-                                          borderRadius: 4,
-                                          background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
-                                          overflow: 'visible',
-                                          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
+                                      fullWidth
+                                      PaperProps={{
+                                        sx: {
+                                          borderRadius: 3,
+                                          p: 2,
+                                          background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)'
                                         }
                                       }}
                                     >
-                                      <Box sx={{ 
-                                        position: 'relative',
-                                        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                                        p: 3,
-                                        borderTopLeftRadius: 'inherit',
-                                        borderTopRightRadius: 'inherit',
-                                        color: '#fff',
-                                        textAlign: 'center'
+                                      <DialogTitle sx={{ 
+                                        textAlign: 'center',
+                                        pb: 2,
+                                        pt: 1,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: 1
                                       }}>
-                                        <IconButton
-                                          onClick={() => setOpenQRCodeId(null)}
-                                          sx={{ 
-                                            position: 'absolute',
-                                            right: -12,
-                                            top: -12,
-                                            bgcolor: '#fff',
-                                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                                            border: '2px solid',
-                                            borderColor: '#fff',
-                                            width: 32,
-                                            height: 32,
-                                            '&:hover': {
-                                              bgcolor: '#fff',
-                                              transform: 'rotate(90deg)'
-                                            },
-                                            transition: 'transform 0.2s ease-in-out'
-                                          }}
-                                        >
-                                          <CloseIcon sx={{ fontSize: 18, color: '#1976d2' }} />
-                                        </IconButton>
-                                        <QrCodeIcon sx={{ fontSize: 40, mb: 1 }} />
-                                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+                                        <QrCodeIcon sx={{ fontSize: 40, color: 'primary.main' }} />
+                                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
                                           QR Code do Link
                                         </Typography>
-                                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                                          Escaneie para acessar
-                                        </Typography>
-                                      </Box>
-
-                                      <DialogContent sx={{ p: 4 }}>
-                                        <Box
-                                          id={`qr-code-${link.id}`}
-                                          sx={{
-                                            width: '100%',
-                                            height: 220,
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            mb: 3,
-                                            p: 3,
-                                            bgcolor: '#fff',
-                                            borderRadius: 3,
-                                            border: '1px solid',
-                                            borderColor: 'divider'
-                                          }}
-                                        >
+                                      </DialogTitle>
+                                      <DialogContent sx={{ 
+                                        display: 'flex', 
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        pb: 1
+                                      }}>
+                                        <Box sx={{ 
+                                          p: 3,
+                                          bgcolor: 'white',
+                                          borderRadius: 2,
+                                          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                                          mb: 2
+                                        }}>
                                           <QRCodeSVG
                                             value={getShortUrl(link.slug)}
-                                            size={180}
+                                            size={200}
                                             level="H"
                                             includeMargin={true}
                                           />
                                         </Box>
-                                        
-                                        <Stack direction="row" spacing={2}>
-                                          <Button
-                                            fullWidth
-                                            variant="contained"
-                                            startIcon={<DownloadIcon />}
-                                            onClick={() => {
-                                              const svg = document.querySelector('#qr-code-' + link.id + ' svg');
-                                              if (svg) {
-                                                const svgData = new XMLSerializer().serializeToString(svg);
-                                                const canvas = document.createElement('canvas');
-                                                const ctx = canvas.getContext('2d');
-                                                const img = new Image();
-                                                img.onload = () => {
-                                                  canvas.width = img.width;
-                                                  canvas.height = img.height;
-                                                  if (ctx) {
-                                                    ctx.fillStyle = '#fff';
-                                                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                                                    ctx.drawImage(img, 0, 0);
-                                                  }
-                                                  const pngFile = canvas.toDataURL('image/png');
-                                                  const downloadLink = document.createElement('a');
-                                                  downloadLink.download = `qrcode-${link.slug}.png`;
-                                                  downloadLink.href = pngFile;
-                                                  downloadLink.click();
-                                                };
-                                                img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-                                              }
-                                            }}
-                                            sx={{ 
-                                              py: 1.5,
-                                              borderRadius: 2,
-                                              textTransform: 'none',
-                                              fontWeight: 600,
-                                              boxShadow: 'none',
-                                              background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                                              '&:hover': {
-                                                boxShadow: 'none',
-                                                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                                                transform: 'translateY(-1px)'
-                                              }
-                                            }}
-                                          >
-                                            Baixar
-                                          </Button>
-                                          <Button
-                                            fullWidth
-                                            variant="outlined"
-                                            startIcon={<ShareIcon />}
-                                            onClick={async () => {
-                                              try {
-                                                const svg = document.querySelector('#qr-code-' + link.id + ' svg');
-                                                if (svg) {
-                                                  const svgData = new XMLSerializer().serializeToString(svg);
-                                                  const canvas = document.createElement('canvas');
-                                                  const ctx = canvas.getContext('2d');
-                                                  const img = new Image();
-                                                  img.onload = async () => {
-                                                    canvas.width = img.width;
-                                                    canvas.height = img.height;
-                                                    if (ctx) {
-                                                      ctx.fillStyle = '#fff';
-                                                      ctx.fillRect(0, 0, canvas.width, canvas.height);
-                                                      ctx.drawImage(img, 0, 0);
-                                                    }
-                                                    canvas.toBlob(async (blob) => {
-                                                      if (blob) {
-                                                        const file = new File([blob], 'qrcode.png', { type: 'image/png' });
-                                                        if (navigator.share) {
-                                                          try {
-                                                            await navigator.share({
-                                                              title: 'QR Code - ' + link.slug,
-                                                              text: 'Escaneie este QR Code para acessar: ' + getShortUrl(link.slug),
-                                                              files: [file]
-                                                            });
-                                                          } catch (err) {
-                                                            console.error('Erro ao compartilhar:', err);
-                                                          }
-                                                        } else {
-                                                          showNotification('Compartilhamento não suportado neste navegador', 'error');
-                                                        }
-                                                      }
-                                                    }, 'image/png');
-                                                  };
-                                                  img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-                                                }
-                                              } catch (err) {
-                                                console.error('Erro ao compartilhar:', err);
-                                                showNotification('Erro ao compartilhar QR Code', 'error');
-                                              }
-                                            }}
-                                            sx={{ 
-                                              py: 1.5,
-                                              borderRadius: 2,
-                                              textTransform: 'none',
-                                              fontWeight: 600,
-                                              borderColor: 'rgba(25, 118, 210, 0.5)',
-                                              '&:hover': {
-                                                borderColor: 'primary.main',
-                                                bgcolor: 'rgba(25, 118, 210, 0.04)',
-                                                transform: 'translateY(-1px)'
-                                              }
-                                            }}
-                                          >
-                                            Compartilhar
-                                          </Button>
-                                        </Stack>
+                                        <Typography 
+                                          variant="body2" 
+                                          sx={{ 
+                                            color: 'text.secondary',
+                                            textAlign: 'center',
+                                            maxWidth: '80%',
+                                            mb: 1
+                                          }}
+                                        >
+                                          Escaneie este QR Code para acessar:
+                                        </Typography>
+                                        <Typography 
+                                          variant="subtitle2" 
+                                          sx={{ 
+                                            color: 'primary.main',
+                                            fontWeight: 600,
+                                            wordBreak: 'break-all',
+                                            textAlign: 'center'
+                                          }}
+                                        >
+                                          {getShortUrl(link.slug)}
+                                        </Typography>
                                       </DialogContent>
+                                      <DialogActions sx={{ justifyContent: 'center', pt: 1, pb: 2 }}>
+                                        <Button
+                                          onClick={handleQRCodeClose}
+                                          variant="outlined"
+                                          startIcon={<CloseIcon />}
+                                          sx={{
+                                            borderRadius: 2,
+                                            textTransform: 'none',
+                                            px: 3
+                                          }}
+                                        >
+                                          Fechar
+                                        </Button>
+                                      </DialogActions>
                                     </Dialog>
                                 </Box>
                               </Box>
