@@ -784,6 +784,25 @@ function HomePage() {
                                 mt: 0
                               }}>
                                 <IconButton
+                                  onClick={() => handleQRCodeClick(link.id)}
+                                  size="small"
+                                  sx={{
+                                    flex: 1,
+                                    height: 42,
+                                    color: '#1976d2',
+                                    bgcolor: 'rgba(25, 118, 210, 0.04)',
+                                    border: '1px solid',
+                                    borderColor: 'rgba(25, 118, 210, 0.1)',
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      bgcolor: 'rgba(25, 118, 210, 0.08)'
+                                    }
+                                  }}
+                                >
+                                  <QrCodeIcon sx={{ fontSize: 18 }} />
+                                </IconButton>
+
+                                <IconButton
                                   onClick={() => handleEditClick(link)}
                                   size="small"
                                   sx={{
@@ -1102,6 +1121,18 @@ function HomePage() {
                                             </Typography>
                                             <Box sx={{ display: 'flex', gap: 0.5 }}>
                                               <IconButton
+                                                onClick={() => handleQRCodeClick(link.id)}
+                                                size="small"
+                                                sx={{ 
+                                                  color: 'primary.main',
+                                                  '&:hover': {
+                                                    bgcolor: 'rgba(25, 118, 210, 0.08)'
+                                                  }
+                                                }}
+                                              >
+                                                <QrCodeIcon sx={{ fontSize: 20 }} />
+                                              </IconButton>
+                                              <IconButton
                                                 component={Link}
                                                 href={getShortUrl(link.slug)}
                                                 target="_blank"
@@ -1293,39 +1324,63 @@ function HomePage() {
                                       open={openQRCodeId === link.id}
                                       onClose={handleQRCodeClose}
                                       maxWidth="xs"
-                                      fullWidth
-                                      PaperProps={{
-                                        sx: {
-                                          borderRadius: 3,
-                                          p: 2,
-                                          background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)'
+                                      TransitionComponent={Zoom}
+                                      sx={{ 
+                                        '& .MuiDialog-paper': { 
+                                          width: { xs: 'calc(100% - 32px)', sm: '360px' },
+                                          m: 2,
+                                          borderRadius: 4,
+                                          background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+                                          overflow: 'visible',
+                                          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)'
                                         }
                                       }}
                                     >
-                                      <DialogTitle sx={{ 
-                                        textAlign: 'center',
-                                        pb: 2,
-                                        pt: 1,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: 1
+                                      <Box sx={{ 
+                                        position: 'relative',
+                                        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                        p: 3,
+                                        borderTopLeftRadius: 'inherit',
+                                        borderTopRightRadius: 'inherit',
+                                        color: '#fff',
+                                        textAlign: 'center'
                                       }}>
-                                        <QrCodeIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                                        <IconButton
+                                          onClick={handleQRCodeClose}
+                                          sx={{ 
+                                            position: 'absolute',
+                                            right: -12,
+                                            top: -12,
+                                            bgcolor: '#fff',
+                                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                            border: '2px solid',
+                                            borderColor: '#fff',
+                                            width: 32,
+                                            height: 32,
+                                            '&:hover': {
+                                              bgcolor: '#fff',
+                                              transform: 'rotate(90deg)'
+                                            },
+                                            transition: 'transform 0.2s ease-in-out'
+                                          }}
+                                        >
+                                          <CloseIcon sx={{ fontSize: 18, color: '#1976d2' }} />
+                                        </IconButton>
+                                        <QrCodeIcon sx={{ fontSize: 40, mb: 1 }} />
+                                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
                                           QR Code do Link
                                         </Typography>
-                                      </DialogTitle>
+                                      </Box>
                                       <DialogContent sx={{ 
+                                        p: 3,
                                         display: 'flex', 
                                         flexDirection: 'column',
-                                        alignItems: 'center',
-                                        pb: 1
+                                        alignItems: 'center'
                                       }}>
                                         <Box sx={{ 
                                           p: 3,
                                           bgcolor: 'white',
-                                          borderRadius: 2,
+                                          borderRadius: 3,
                                           boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
                                           mb: 2
                                         }}>
@@ -1339,7 +1394,7 @@ function HomePage() {
                                         <Typography 
                                           variant="body2" 
                                           sx={{ 
-                                            color: 'text.secondary',
+                                            color: '#64748b',
                                             textAlign: 'center',
                                             maxWidth: '80%',
                                             mb: 1
@@ -1359,20 +1414,6 @@ function HomePage() {
                                           {getShortUrl(link.slug)}
                                         </Typography>
                                       </DialogContent>
-                                      <DialogActions sx={{ justifyContent: 'center', pt: 1, pb: 2 }}>
-                                        <Button
-                                          onClick={handleQRCodeClose}
-                                          variant="outlined"
-                                          startIcon={<CloseIcon />}
-                                          sx={{
-                                            borderRadius: 2,
-                                            textTransform: 'none',
-                                            px: 3
-                                          }}
-                                        >
-                                          Fechar
-                                        </Button>
-                                      </DialogActions>
                                     </Dialog>
                                 </Box>
                               </Box>
